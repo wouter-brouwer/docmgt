@@ -182,7 +182,7 @@ TodoDir.s = CheckDirectory(DocumentDir + "todo")
 HeadersDir.s = CheckDirectory(DocumentDir + "headers")
 
 LockFile.s = LockDir + #Prog + ".lock"
-LockFileNr = CreateFile(0, LockFile)
+LockFileNr = CreateFile(#PB_Any, LockFile)
 If LockFileNr = 0 
   LogMsg("Critical: Unable to create " + LockFile + " Program already running?")
 EndIf
@@ -390,7 +390,8 @@ VerwerkFileError:
   
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 1
-; Folding = AO8
+; IDE Options = PureBasic 5.20 LTS (Linux - x64)
+; CursorPosition = 185
+; FirstLine = 63
+; Folding = BO8
 ; EnableXP
