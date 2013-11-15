@@ -1,5 +1,5 @@
 #Prog = "SplitAFP"
-test
+
 ; Dit programma splitst AFP bestanden naar losse documenten
 ; De AFP header wordt apart opgeslagen.
 
@@ -391,7 +391,6 @@ VerwerkFileError:
 Return
 ;}
 ; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 147
-; FirstLine = 23
+; CursorPosition = 1
 ; Folding = AO8
 ; EnableXP
