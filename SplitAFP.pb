@@ -1,6 +1,6 @@
 #Prog = "SplitAFP"
 
-; Dit programma splitst AFP bestanden naar losse documenten
+; Dit programma splitst AFP bestanden naar losse documenten.
 ; De AFP header wordt apart opgeslagen.
 
 ; Input filenamen dienen te bestaan uit <stroom>_<iets unieks>.afp
@@ -160,6 +160,8 @@ EndProcedure
 ;{ Initialisatie
 *Record = AllocateMemory(32768)
 
+NewList OutputFiles.s()
+
 ; De verschillende directories
 BaseDir.s = "/aiw/aiw1"
 If FileSize(BaseDir) <> -2
@@ -174,6 +176,8 @@ LockDir.s = CheckDirectory(BaseDir + "locks")
 DocumentDir.s = CheckDirectory(BaseDir + "documents")
 
 InputDir.s = CheckDirectory(DocumentDir + "afpinput")
+
+ProcessedDir.s = CheckDirectory(InputDir + "processed")
 
 TmpDir.s = CheckDirectory(InputDir + "tmp")
 
@@ -222,6 +226,8 @@ End
 ;{ VerwerkFile:
 VerwerkFile:
 
+ClearList(OutputFiles())
+
   Error.s = ""
   LogMsg("Info: Processing " + InputDir + InputFile)
 
@@ -247,8 +253,6 @@ VerwerkFile:
   TodoSubDir.s = TodoDir + Stroom + "/"
   CheckDirectory(TodoSubDir)
   
-  LogMsg("Info: Processing " + InputDir + InputFile)
- 
   InputFileNr = ReadFile(#PB_Any, InputDir + InputFile)
   If InputFileNr = 0
     Error = "Error: InputFile can not be opened."
@@ -288,6 +292,14 @@ VerwerkFile:
     If Triplet = "D3A8A8" ; BDT
       Header = 0
       CloseFile(HeaderFileNr)
+      HeaderFileNr = 0
+    EndIf
+    
+    If Triplet = "D3EEEE" ; NOP
+    EndIf
+    
+    If Triplet = "D3A8AF" ; BPG
+      Pages + 1
     EndIf
     
     If Triplet = "D3A9A8" ; EDT
@@ -307,6 +319,7 @@ VerwerkFile:
           Error = "Unable to create " + TmpSubDir + OutputFile
           Break
         EndIf
+        Pages = 0
       Else
         Skip = 1
       EndIf
@@ -330,6 +343,9 @@ VerwerkFile:
       NamedGroup = 0
       If PreviousTriplet <> Triplet
         CloseFile(OutputFileNr)
+        AddElement(OutputFiles())
+        OutputFiles() = ReplaceString(OutputFile, ".", "_P" + Str(Pages) + ".")
+        RenameFile(TmpSubDir + OutputFile, TmpSubDir + OutputFiles()) 
       EndIf
     EndIf
     
@@ -355,14 +371,20 @@ VerwerkFile:
     LogMsg("Critical: Unable to move " + TmpSubDir + HeaderFile + " to " + HeadersDir + HeaderFile)
   EndIf
   
-  For i = 1 To NamedGroupNr
-    OutputFile.s = OutputBase + "_0" + RSet(Str(i), 6, "0") + ".afp"
-    If Not RenameFile(TmpSubDir + OutputFile, TodoSubDir + OutpuFile)
-        LogMsg("Critical: Unable to move " + TmpSubDir + OutputFile + " to " + TodoSubDir + OutputFile)
+  ForEach OutputFiles()
+    If Not RenameFile(TmpSubDir + OutputFiles(), TodoSubDir + OutputFiles())
+        LogMsg("Critical: Unable to move " + TmpSubDir + OutputFiles() + " to " + TodoSubDir)
     EndIf
-
-  Next i
+  Next
   
+  DeleteDirectory(TmpSubDir, "")
+  
+  If RenameFile(InputDir + InputFile, ProcessedDir + InputFile)
+    LogMsg(InputDir + InputFile + " moved to " + ProcessedDir)  
+  Else
+    Logmsg("Critical: Unable move " + InputDir + InputFile + " to " + ProcessedDir)
+  EndIf
+ 
 Return
 ;}
 
@@ -391,7 +413,7 @@ VerwerkFileError:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 185
-; FirstLine = 63
-; Folding = BO8
+; CursorPosition = 346
+; FirstLine = 178
+; Folding = Ac-
 ; EnableXP
