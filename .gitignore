@@ -1,4 +1,6 @@
+*~
 *.afp
 *.log
+*.tmp
 *.lock
 jobnr.txt
