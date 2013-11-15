@@ -1,5 +1,7 @@
 #Prog = "SplitAFP"
 
+;{ Documentatie
+
 ; Dit programma splitst AFP bestanden naar losse documenten.
 ; De AFP header wordt apart opgeslagen.
 
@@ -10,6 +12,8 @@
 
 ; De uitvoer bestanden heten <stroom>_yyyymmdduuiiss_header.afp in /aiw/aiw1/documenten/headers
 ;  en <stroom>_<timestamp>_<sequencenr>_p<pages>.afp
+
+;}
 
 Global LogDir.s
 
@@ -190,6 +194,7 @@ LockFileNr = CreateFile(#PB_Any, LockFile)
 If LockFileNr = 0 
   LogMsg("Critical: Unable to create " + LockFile + " Program already running?")
 EndIf
+LogMsg(#Prog + " started")
 ;}
 
 ;{ Main loop
@@ -413,7 +418,6 @@ VerwerkFileError:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 346
-; FirstLine = 178
-; Folding = Ac-
+; CursorPosition = 14
+; Folding = AA1
 ; EnableXP

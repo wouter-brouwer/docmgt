@@ -1,0 +1,4 @@
+#stroom 32 en 33 op werkdagen van 00:00 tot 20:02 bij-ouder-dan 01:00 minimaal 10 maximaal 150
+#stroom 32 en 33 op werkdagen van 00:00 tot 20:02 bij-niet-jonger-dan 0:30 minimaal 10 maximaal 20
+#stroom 35 op dinsdag en donderdag om 12:00 en 13:00 en 14:00 min-documenten 10
+stroom 83 bij-niet-jonger-dan 0:30 max-paginas 250

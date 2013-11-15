@@ -103,43 +103,68 @@ EndProcedure
 
 ;{ Initialisatie
 
-InputDir.s = "split/"
-OutputDir.s = "merged/"
+JobsDir.s = "./documents/jobs/"
+HeaderDir.s = "./documents/headers/"
+OutputDir.s = "./System/hf/afp/"
 
 *BDT = AllocateMemory(17)
 PokeHexString(*BDT, "5a0010d3a8a8000000ffffffffffffffff")
 *EDT = AllocateMemory(17)
 PokeHexString(*EDT, "5a0010d3a9a8000000ffffffffffffffff")
-
+NewList FileNames.s()
 ;}
 
-;{ Loop input bestanden
-
-If ExamineDirectory(0, InputDir, "*_0*")
+;{ Loop door de jobs
+If ExamineDirectory(0, JobsDir, "*.*")
   While NextDirectoryEntry(0)
-    If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-      InputFileName.s = DirectoryEntryName(0)
-      Gosub VerwerkFile
+    If DirectoryEntryType(0) = #PB_DirectoryEntry_Directory
+      JobName.s = DirectoryEntryName(0)
+      JobDir.s = JobsDir + JobName + "/"
+      Gosub VerwerkJob
     EndIf
   Wend
   FinishDirectory(0)
 EndIf
+;}
+
+End
+
+;{ VerwerkJob:
+VerwerkJob:
+
+ClearList(FileNames())
+If ExamineDirectory(1, JobDir, "*.afp")
+  While NextDirectoryEntry(1)
+    If DirectoryEntryType(1) = #PB_DirectoryEntry_File
+      AddElement(FileNames())
+      FileNames() = DirectoryEntryName(1)
+    EndIf
+  Wend
+  FinishDirectory(1)
+EndIf
+
+SortList(FileNames(), #PB_Sort_Ascending)
+
+ForEach FileNames()
+  InputFile.s = FileNames()
+  Gosub VerwerkFile
+Next
 
 If OutputFileNr > 0
   WriteData(OutputFileNr, *EDT, 17)
   CloseFile(OutputFileNr)
   OutputFileNr = 0
   LogMsg("Info: " + Str(Documents) + " documents")
+  RenameFile(OutputDir + OutputFile.s, OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
 EndIf
-
+Return
 ;}
 
-End
 
 ;{ VerwerkFile:
 VerwerkFile:
 
-  OutputFile.s = StringField(InputFileName, 1, "_0")
+  OutputFile.s = StringField(InputFile, 1, "_0") + ".tmp"
   
   If OutputFile <> PreviousOutputFile.s
     If OutputFileNr > 0
@@ -149,11 +174,11 @@ VerwerkFile:
       LogMsg("Info: " + Str(Documents) + " documents")
     EndIf
     ; Read Header
-    HeaderFile.s = OutputFile + "_header"
-    HeaderFileNr = ReadFile(#PB_Any, InputDir + HeaderFile)
+    HeaderFile.s = ReplaceString(OutputFile, ".", "_header.")
+    HeaderFile.s = ReplaceString(HeaderFile, ".tmp", ".afp")
+    HeaderFileNr = ReadFile(#PB_Any, HeaderDir + HeaderFile)
     If HeaderFileNr = 0 
-      LogMsg("Error: ???")
-      End
+      LogMsg("Critical: Can not read " + HeaderDir + HeaderFile)
     EndIf  
     HeaderLength = Lof(HeaderFileNr)
     *HeaderBuffer = AllocateMemory(HeaderLength)
@@ -161,11 +186,10 @@ VerwerkFile:
     CloseFile(HeaderFileNr)
     ; Create OutputFile
     OutputFileNr = CreateFile(#PB_Any, OutputDir + OutputFile)
-    LogMsg("Info: Creating " + OutputFile)
     If OutputFileNr = 0
-      LogMsg("Error: ???")
-      End
+      LogMsg("Critical: Unable to create " + OutputDir + OutputFile)
     EndIf
+    LogMsg("Info: Creating " + OutputFile)
     Documents = 0
     ; Write Header
     WriteData(OutputFileNr, *HeaderBuffer, HeaderLength)
@@ -173,10 +197,9 @@ VerwerkFile:
     PreviousOutputFile = OutputFile
   EndIf
   
-  InputFileNr = ReadFile(#PB_Any, InputDir + InputFileName)
+  InputFileNr = ReadFile(#PB_Any, JobDir + InputFile)
   If InputFileNr = 0 
-    LogMsg("Error: ???")
-    End
+    LogMsg("Critical: Unable to read " + JobDir + InputFile)
   EndIf  
   
   InputFileLength = Lof(InputFileNr)
@@ -188,8 +211,9 @@ VerwerkFile:
 
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 148
-; FirstLine = 22
-; Folding = A+
+
+; IDE Options = PureBasic 5.20 LTS (Linux - x64)
+; CursorPosition = 166
+; FirstLine = 163
+; Folding = --
 ; EnableXP

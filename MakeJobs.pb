@@ -26,6 +26,9 @@
 
 ;}
 
+Global LogDir.s
+NewList FileNames.s()
+
 Procedure LogMsg(Msg.s)
   
   Static LogFileNr, LastRun
@@ -43,10 +46,10 @@ Procedure LogMsg(Msg.s)
   ; Indien nodig de logfile openen
   If LogFileNr = 0
     ; Als hij te groot is aan een nieuwe beginnen
-    If FileSize(#Prog + ".log") > 1024 * 1024 ; 1 MB
-      RenameFile(#Prog + ".log", #Prog + FormatDate("_%yyyy-%mm-%dd", Date()) + ".log")
+    If FileSize(LogDir + #Prog + ".log") > 1024 * 1024 ; 1 MB
+      RenameFile(LogDir + #Prog + ".log", LogDir + #Prog + FormatDate("_%yyyy-%mm-%dd", Date()) + ".log")
     EndIf
-    LogFileNr = OpenFile(#PB_Any, #Prog + ".log")
+    LogFileNr = OpenFile(#PB_Any, LogDir + #Prog + ".log")
     FileSeek(LogFileNr, Lof(LogFileNr))
   EndIf
   
@@ -57,8 +60,7 @@ Procedure LogMsg(Msg.s)
   WriteStringN(LogFileNr, Regel)
   
   ; Stoppen bij ernstige fout
-  If FindString(LCase(Msg), "error") = 1 Or 
-     FindString(LCase(Msg), "critical") = 1
+  If FindString(LCase(Msg), "critical") = 1
     End
   EndIf
   
@@ -155,38 +157,62 @@ Procedure DatumMatch(Datum.s, Weekdag, Feestdag, Dag.s)
     
 EndProcedure
 
-;{ Init
-LogMsg(#Prog + " Gestart")
-; ; Stop de hele directory structuur in een Linked List
-; ; zodat makkelijk 
-; If ExamineDirectory(0, "documenten/" + Stroom, "*.*")
-;   While NextDirectoryEntry(0)
-;     If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-;       FileName.s = DirectoryEntryName(0)
-;       FileDate= DirectoryEntryDate(0, #PB_Date_Modified)
-;       Aantal + 1
-;     EndIf
-;   Wend
-;   FinishDirectory(0)
-; EndIf
-; LogMsg("Filescan ready " + Str(Aantal))
+Procedure.s CheckDirectory(Dir.s)
+  If FileSize(Dir) <> -2
+    If Not CreateDirectory(Dir)
+      LogMsg("Critical: Can not create directory "+ Dir)
+    Else
+      LogMsg("Info: Directory " + Dir + " created")
+    EndIf
+  Else
+    ProcedureReturn Dir + "/"
+  EndIf
+EndProcedure
 
-If ReadFile(0, "JobNr.txt")
+;{ Init
+
+; De verschillende directories
+BaseDir.s = "/aiw/aiw1"
+If FileSize(BaseDir) <> -2
+  BaseDir.s = "."
+EndIf
+BaseDir + "/"
+
+LogDir.s = CheckDirectory(BaseDir + "logs")
+
+LockDir.s = CheckDirectory(BaseDir + "locks")
+
+ConfigDir.s = CheckDirectory(BaseDir + "config")
+
+DocumentDir.s = CheckDirectory(BaseDir + "documents")
+
+TodoDir.s = CheckDirectory(DocumentDir + "todo")
+
+JobsDir.s = CheckDirectory(DocumentDir + "jobs")
+
+LockFile.s = LockDir + #Prog + ".lock"
+LockFileNr = CreateFile(#PB_Any, LockFile)
+If LockFileNr = 0 
+  LogMsg("Critical: Unable to create " + LockFile + " Program already running?")
+EndIf
+LogMsg(#Prog + " started")
+
+If ReadFile(0, ConfigDir + "JobNr.txt")
   JobNr = Val(ReadString(0))
   CloseFile(0)
 EndIf
 
-TimeFile = ReadFile(#PB_Any, "xTimeFile.txt")
+TimeFileNr = ReadFile(#PB_Any, "xTimeFile.txt")
 ;}
 
 ;{ Main loop
-Repeat
+While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
   
 ;{ Bepaal datum en tijd
   ; Voor testdoeleinden uit een bestandje halen
-  If TimeFile
-    If Not Eof(TimeFile)
-      Line.s = ReadString(TimeFile)
+  If TimeFileNr
+    If Not Eof(TimeFileNr)
+      Line.s = ReadString(TimeFileNr)
       Datum.s = StringField(Line, 1, " ")
       Tijd.s = StringField(Line, 2, " ")
     Else
@@ -201,13 +227,13 @@ Repeat
   
 ;{ Bepaal de datum kenmerken
   If Datum <> VorigeDatum.s
-    Weekdag = DayOfWeek(Date(ParseDate("%dd-%mm-%yyyy", Datum)))
+    Weekdag = DayOfWeek(ParseDate("%dd-%mm-%yyyy", Datum))
     If Weekdag = 0
       Weekdag = 7
     EndIf
     Feestdag = 0
     ; lees feestdagen bestand
-    If ReadFile(1,"feestdagen.txt")
+    If ReadFile(1, ConfigDir + "feestdagen.txt")
       NieuwsteFeestdag.s = "01-01-1970"
       While Not Eof(1)
         Dag.s = FormatDate("%dd-%mm-%yyyy", ParseDate("%dd-%mm-%yyyy", ReadString(1)))
@@ -226,7 +252,7 @@ Repeat
         LogMsg("Warning: Feestdagen moet uitgebreid worden voor het komende jaar")
       EndIf        
     Else        
-      LogMsg("Error: Feestdagen bestand kan niet geopend worden")
+      LogMsg("Critical: Feestdagen bestand kan niet geopend worden")
     EndIf
     VorigeDatum = Datum
   EndIf
@@ -237,8 +263,8 @@ Repeat
     Debug "Verwerking: " + Datum + " " + Tijd
     
     ;{ Verwerk alle regels
-    If Not ReadFile(1,"regels.txt")
-      LogMsg("Error: Regel bestand kan niet worden geopend")
+    If Not ReadFile(1, ConfigDir + "makejobsregels.txt")
+      LogMsg("Critical: Regel bestand kan niet worden geopend")
     EndIf
 
     While Not Eof(1)
@@ -252,6 +278,8 @@ Repeat
       NietJonger = 0
       MinDocs = 0
       MaxDocs = 0
+      MinPages = 0
+      MaxPages = 0
       ;}
       
       ;{ Parse de regel
@@ -293,12 +321,20 @@ Repeat
           KeyWord.s = "NietJonger"
           Continue
         EndIf
-        If Woord = "minimaal"
-          KeyWord.s = "Minimaal"
+        If Woord = "min-documenten"
+          KeyWord.s = "MinimaalDocumenten"
           Continue
         EndIf
-        If Woord = "maximaal"
-          KeyWord.s = "Maximaal"
+        If Woord = "max-documenten"
+          KeyWord.s = "MaximaalDocumenten"
+          Continue
+        EndIf
+        If Woord = "min-paginas"
+          KeyWord.s = "MinimaalPaginas"
+          Continue
+        EndIf
+        If Woord = "max-paginas"
+          KeyWord.s = "MaximaalPaginas"
           Continue
         EndIf
         If Woord = "en"
@@ -311,7 +347,7 @@ Repeat
             If IsDag(Woord)
               Dagen + Woord + ";"
             Else
-              LogMsg("warning Ongeldige dag " + Woord + " in regel " + Line)
+              LogMsg("Error: Ongeldige dag " + Woord + " in regel " + Line)
               Line = ""
               Break
             EndIf
@@ -319,7 +355,7 @@ Repeat
             If IsTijd(Woord)
               Tijden + Woord + ";"
             Else
-              LogMsg("warning Ongeldige tijd " + Woord + " in regel " + Line)
+              LogMsg("Error: Ongeldige tijd " + Woord + " in regel " + Line)
               Line = ""
               Break
             EndIf
@@ -327,7 +363,7 @@ Repeat
             If IsTijd(Woord)
               Periodes + Woord + "-"
             Else
-              LogMsg("warning Ongeldige tijd " + Woord + " in regel " + Line)
+              LogMsg("Error: Ongeldige tijd " + Woord + " in regel " + Line)
               Line = ""
               Break
             EndIf
@@ -335,7 +371,7 @@ Repeat
             If IsTijd(Woord)
               Periodes + Woord + ";"
             Else
-              LogMsg("warning Ongeldige tijd " + Woord + " in regel " + Line)
+              LogMsg("Error: Ongeldige tijd " + Woord + " in regel " + Line)
               Line = ""
               Break
             EndIf
@@ -343,7 +379,7 @@ Repeat
             If IsTijd(Woord)
               Ouder = ParseDate("%hh:%ii", Woord)
             Else
-              LogMsg("warning Ongeldige tijd " + Woord + " in regel " + Line)
+              LogMsg("Error: Ongeldige tijd " + Woord + " in regel " + Line)
               Line = ""
               Break
             EndIf
@@ -351,16 +387,20 @@ Repeat
             If IsTijd(Woord)
               NietJonger = ParseDate("%hh:%ii", Woord)
             Else
-              LogMsg("warning Ongeldige tijd " + Woord + " in regel " + Line)
+              LogMsg("Error: Ongeldige tijd " + Woord + " in regel " + Line)
               Line = ""
               Break
             EndIf
-          Case "Minimaal"
+          Case "MinimaalDocumenten"
             MinDocs= Val(Woord)
-          Case "Maximaal"
+          Case "MaximaalDocumenten"
             MaxDocs = Val(Woord)
+          Case "MinimaalPaginas"
+            MinPages = Val(Woord)
+          Case "MaximaalPaginas"
+            MaxPages = Val(Woord)
           Default
-            LogMsg("warning Onverwacht woord " + Woord)
+            LogMsg("Error: Onverwacht woord " + Woord)
             Line = ""
             Break
         EndSelect 
@@ -424,7 +464,7 @@ Repeat
         Match = 0
         Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii", Datum + " " + Tijd) - Ouder          
         For i = 1 To CountString(Stromen, ";")
-          If ExamineDirectory(0, "documenten", StringField(Stromen, i, ";") + "*.*")
+          If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
             While NextDirectoryEntry(0)
               If DirectoryEntryType(0) = #PB_DirectoryEntry_File
                 FileDate = DirectoryEntryDate(0, #PB_Date_Modified)
@@ -447,7 +487,7 @@ Repeat
         Match = 0
         Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii", Datum + " " + Tijd) - Ouder          
         For i = 1 To CountString(Stromen, ";")
-          If ExamineDirectory(0, "documenten", StringField(Stromen, i, ";") + "*.*")
+          If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
             While NextDirectoryEntry(0)
               If DirectoryEntryType(0) = #PB_DirectoryEntry_File
                 If DirectoryEntryDate(0, #PB_Date_Modified) >= Peil
@@ -465,18 +505,45 @@ Repeat
       ;}
         
       ;{ Check of er voldoende documenten zijn
-      Aantal = 0
+      AantalDocs = 0
       For i = 1 To CountString(Stromen, ";")
-        If ExamineDirectory(0, "documenten", StringField(Stromen, i, ";") + "*.*")
+        If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
           While NextDirectoryEntry(0)
             If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-              Aantal + 1
+              AantalDocs + 1
+              If AantalDocs >= MinDocs
+                Break
+              EndIf
             EndIf
           Wend
           FinishDirectory(0)
         EndIf
       Next i
-      If Aantal =0 Or Aantal < MinDocs
+      If AantalDocs = 0 Or AantalDocs < MinDocs
+        Continue
+      EndIf
+      ;}
+             
+      ;{ Check of er voldoende pagina's zijn
+      AantalPages = 0
+      For i = 1 To CountString(Stromen, ";")
+        If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
+          While NextDirectoryEntry(0)
+            If DirectoryEntryType(0) = #PB_DirectoryEntry_File
+              FileName.s = DirectoryEntryName(0)
+              p = FindString(FileName, "_P")
+              e = FindString(FileName, ".")
+              Pages = Val(Mid(FileName, p + 2, e - p))
+              AantalPages + Pages
+              If AantalPages >= MinPages
+                Break
+              EndIf
+            EndIf
+          Wend
+          FinishDirectory(0)
+        EndIf
+      Next i
+      If AantalPages = 0 Or AantalPages < MinPages
         Continue
       EndIf
       ;}
@@ -485,30 +552,29 @@ Repeat
       
       ;{ Maak job
       
-      Aantal = 0
+      AantalDocs = 0
+      AantalPages = 0
       For i = 1 To CountString(Stromen, ";")
-        If ExamineDirectory(0, "documenten", StringField(Stromen, i, ";") + "*.*")
+        Stroom.s = StringField(Stromen, i, ";")
+        TodoStroomDir.s = TodoDir + Stroom + "/"
+        ClearList(FileNames())
+        If ExamineDirectory(0, TodoStroomDir, Stroom + "*.*")
           While NextDirectoryEntry(0)
             If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-              FileName.s = DirectoryEntryName(0)
-              If Aantal = MaxDocs
-                LogMsg(JobName.s + " gemaakt met " + Aantal + " documenten")
-                Aantal = 0
-              EndIf
-              Aantal + 1
-              If Aantal = 1
-                JobNr + 1        
-                JobName.s = ReplaceString(Stromen, ";", "_") + RSet(Str(JobNr), 8, "0")
-                CreateDirectory("jobs/" + JobName)
-              EndIf
-              RenameFile("documenten/" + FileName, "jobs/" + JobName + "/" + FileName) 
+              AddElement(FileNames())
+              FileNames() = DirectoryEntryName(0)
             EndIf
           Wend
           FinishDirectory(0)
+          SortList(FileNames(), #PB_Sort_Ascending)
+          ForEach FileNames()
+            FileName = FileNames()
+            Gosub VerwerkFile
+          Next
         EndIf
       Next i
-      If Aantal > 0
-        LogMsg(JobName + " gemaakt met " + Aantal + " documenten")
+      If AantalDocs > 0
+        LogMsg(JobName.s + " created with " + Str(AantalDocs) + " documents and " + Str(AantalPages) + " pages")
       EndIf
     
       ;}
@@ -517,15 +583,6 @@ Repeat
     CloseFile(1) ; Regels
     ;}
       
-    ;{ Opslaan laatst gebruikte JobNr
-    If CreateFile(0, "JobNr.txt")
-      WriteStringN(0, Str(JobNr))
-      CloseFile(0)
-    Else
-      LogMsg("Error: Laatst gebruikte JobNr kan niet worden opgeslagen")
-    EndIf
-    ;}
-
     VorigeTijd = Tijd
     
   EndIf
@@ -534,19 +591,63 @@ Repeat
   
   Delay(100) ; CPU besparing
   
-ForEver
+Wend
 ;}
 
 ;{ Afsluiting
-If TimeFile
-  CloseFile(TimeFile)
+If LockFileNr
+  CloseFile(LockFileNr)
+EndIf
+
+If TimeFileNr
+  CloseFile(TimeFileNr)
 EndIf
 
 End
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 479
-; FirstLine = 321
-; Folding = Zv66
+
+;{ VerwerkFile:
+VerwerkFile:
+
+  p = FindString(FileName, "_P")
+  e = FindString(FileName, ".")
+  Pages = Val(Mid(FileName, p + 2, e - p))
+  
+  If (MaxDocs > 0 And AantalDocs = MaxDocs) Or
+     (MaxPages > 0 And AantalPages >= MaxPages)
+    LogMsg(JobName.s + " created with " + Str(AantalDocs) + " documents and " + Str(AantalPages) + " pages")
+    AantalDocs = 0
+    AantalPages = 0
+  EndIf
+  
+  AantalDocs + 1
+  AantalPages + Pages
+  If AantalDocs = 1
+    JobNr + 1        
+    JobName.s = ReplaceString(Stromen, ";", "_") + RSet(Str(JobNr), 8, "0")
+    JobDir.s = JobsDir + JobName + "/"
+    If Not CreateDirectory(JobDir)
+      LogMsg("Critical: Unable to create " + JobDir)
+    EndIf 
+     ;{ Opslaan laatst gebruikte JobNr
+    If CreateFile(0, ConfigDir + "JobNr.txt")
+      WriteStringN(0, Str(JobNr))
+      CloseFile(0)
+    Else
+      LogMsg("Critical: Laatst gebruikte JobNr kan niet worden opgeslagen")
+    EndIf
+    ;}            
+  EndIf
+  
+  If Not RenameFile(TodoStroomDir + FileName, JobDir + FileName) 
+    LogMsg("Critical: Unable move " + TodoStroomDir + FileName + " to " + JobDir)
+  EndIf
+
+Return
+;}
+; IDE Options = PureBasic 5.20 LTS (Linux - x64)
+; CursorPosition = 576
+; FirstLine = 81
+; Folding = ASA1-
 ; EnableUnicode
 ; EnableXP
