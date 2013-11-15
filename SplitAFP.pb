@@ -1,4 +1,5 @@
 #Prog = "SplitAFP"
+test
 ; Dit programma splitst AFP bestanden naar losse documenten
 ; De AFP header wordt apart opgeslagen.
 
