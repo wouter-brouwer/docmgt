@@ -1,0 +1,69 @@
+Split & Merge AFP
+
+Bij het splitsen van een AFP job in documenten spelen een aantal zaken.
+
+Resources
+Formdef, Font, Codepage, Overlay, PageSegment
+
+Document boundaries
+Named Page Groups
+Er moet minimaal 1 niveau van Named Page Groups zijn.
+Als er geen Page Groups zijn, dan error.
+Als er één niveau PageGroups is dient daarop gesplitst te worden.
+Als er meerdere niveaus zijn dient in principe op het hoogste niveau gesplitst te worden.
+Als er meerdere niveaus zijn en er een override niveau voor de job geldt, dan dienen de hogere niveaus bij elk afgesplitst document toegevoegd te worden.
+Hiervoor moeten de PageGroup records voor het betreffend niveau gebufferd worden en moeten er afsluitende end page group records toegevoegd worden.
+
+Bij het samenvoegen is het van belang dat de pagegroups weer unieke namen krijgen.
+
+
+
+t de omvattende  
+geen PageGroups zijn 
+
+
+
+werkt alleen goed als
+Het hoogste level Named Page Groups de feitelijke documenten aangeeft.
+
+We onderscheiden generic en specific resources.
+Generic resources worden in meerdere documenten gebruikt.
+Specific resources maar in één, meestal zelfs maar op één pagina.
+Specific resources hebben geen vaste naam, maar krijgen meestal een volgnummer.
+
+Generic resources kunnen in een resourcepool bewaard worden.
+Specific resources moet je bij het document houden.
+
+Bij het samenvoegen van documenten is het handig om de specific resources te hernummeren.
+
+
+
+Er alleen resources met een unieke naam worden gebruikt.
+
+SplitAFP heeft de AFP bestanden gesplitst in Headers en afzonderlijke documenten.
+
+Bij het samenvoegen moeten eerst de headers worden samengevoegd.
+
+Daarna de documenten.
+
+
+Voor het samenvoegen van de Headers kun je ze ook splitsen in resources.
+En die resources weer samenvoegen tot één bestand.
+Dit gaat dus fout als er resources in de bestanden zitten met gelijke namen maar verschillende inhoud.
+
+BRG Begin Resource Group
+
+Include voor alle AFP Structured Field Identifiers
+
+BNG.s = "D3A8AA"
+
+
+Include voor LogMsg
+
+Include voor Lock
+
+
+
+Principe dat alle programma's enkelvoudig en zelfstandig draaien en hun uitvoer pas beschikbaar stellen als het klaar is en de invoer als verwerkt markeren.
+
+Multithread mogelijkheden nog uitzoeken. 
