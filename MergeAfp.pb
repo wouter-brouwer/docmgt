@@ -114,106 +114,105 @@ PokeHexString(*EDT, "5a0010d3a9a8000000ffffffffffffffff")
 NewList FileNames.s()
 ;}
 
+Repeat
 ;{ Loop door de jobs
 If ExamineDirectory(0, JobsDir, "*.*")
   While NextDirectoryEntry(0)
     If DirectoryEntryType(0) = #PB_DirectoryEntry_Directory
       JobName.s = DirectoryEntryName(0)
-      JobDir.s = JobsDir + JobName + "/"
-      Gosub VerwerkJob
+      If Left(JobName, 1) <> "." And Right(JobName, 5) <> ".done"
+        JobDir.s = JobsDir + JobName + "/"
+        Gosub VerwerkJob
+      EndIf
     EndIf
   Wend
   FinishDirectory(0)
 EndIf
 ;}
-
+Delay(1000)
+ForEver
 End
 
 ;{ VerwerkJob:
 VerwerkJob:
 
-ClearList(FileNames())
-If ExamineDirectory(1, JobDir, "*.afp")
-  While NextDirectoryEntry(1)
-    If DirectoryEntryType(1) = #PB_DirectoryEntry_File
-      AddElement(FileNames())
-      FileNames() = DirectoryEntryName(1)
-    EndIf
-  Wend
-  FinishDirectory(1)
-EndIf
+  LogMsg("Processing job " + JobName)
 
-SortList(FileNames(), #PB_Sort_Ascending)
-
-ForEach FileNames()
-  InputFile.s = FileNames()
-  Gosub VerwerkFile
-Next
-
-If OutputFileNr > 0
-  WriteData(OutputFileNr, *EDT, 17)
-  CloseFile(OutputFileNr)
-  OutputFileNr = 0
-  LogMsg("Info: " + Str(Documents) + " documents")
-  RenameFile(OutputDir + OutputFile.s, OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
-EndIf
-Return
-;}
-
-
-;{ VerwerkFile:
-VerwerkFile:
-
-  OutputFile.s = StringField(InputFile, 1, "_0") + ".tmp"
+  ;{ Zet de filenamen in een list om ze gesorteerd te kunnen verwerken
+  ClearList(FileNames())
+  If ExamineDirectory(1, JobDir, "*.afp")
+    While NextDirectoryEntry(1)
+      If DirectoryEntryType(1) = #PB_DirectoryEntry_File
+        AddElement(FileNames())
+        FileNames() = DirectoryEntryName(1)
+      EndIf
+    Wend
+    FinishDirectory(1)
+  EndIf
+  ;}
   
-  If OutputFile <> PreviousOutputFile.s
-    If OutputFileNr > 0
-      WriteData(OutputFileNr, *EDT, 17)
-      CloseFile(OutputFileNr)
-      OutputFileNr = 0
-      LogMsg("Info: " + Str(Documents) + " documents")
+  SortList(FileNames(), #PB_Sort_Ascending)
+  ForEach FileNames()
+    InputFile.s = FileNames()    
+    ;{ VerwerkFile    
+    If OutputFileNr = 0      
+      ;{ OpenOutputFile
+      
+      ; Read Header
+      HeaderFile.s = StringField(InputFile, 1, "_0") + "_header.afp"
+      HeaderFileNr = ReadFile(#PB_Any, HeaderDir + HeaderFile)
+      If HeaderFileNr = 0 
+        LogMsg("Critical: Can not read " + HeaderDir + HeaderFile)
+      EndIf  
+      HeaderLength = Lof(HeaderFileNr)
+      *HeaderBuffer = AllocateMemory(HeaderLength)
+      ReadData(HeaderFileNr, *HeaderBuffer, HeaderLength)
+      CloseFile(HeaderFileNr)
+      
+      ; Create OutputFile
+      OutputFile.s = JobName + ".tmp"
+      OutputFileNr = CreateFile(#PB_Any, OutputDir + OutputFile)
+      If OutputFileNr = 0
+        LogMsg("Critical: Unable to create " + OutputDir + OutputFile)
+      EndIf
+      Documents = 0
+      
+      ; Write Header
+      WriteData(OutputFileNr, *HeaderBuffer, HeaderLength)
+      WriteData(OutputFileNr, *BDT, 17)
+    
+      ;}
     EndIf
-    ; Read Header
-    HeaderFile.s = ReplaceString(OutputFile, ".", "_header.")
-    HeaderFile.s = ReplaceString(HeaderFile, ".tmp", ".afp")
-    HeaderFileNr = ReadFile(#PB_Any, HeaderDir + HeaderFile)
-    If HeaderFileNr = 0 
-      LogMsg("Critical: Can not read " + HeaderDir + HeaderFile)
-    EndIf  
-    HeaderLength = Lof(HeaderFileNr)
-    *HeaderBuffer = AllocateMemory(HeaderLength)
-    ReadData(HeaderFileNr, *HeaderBuffer, HeaderLength)
-    CloseFile(HeaderFileNr)
-    ; Create OutputFile
-    OutputFileNr = CreateFile(#PB_Any, OutputDir + OutputFile)
-    If OutputFileNr = 0
-      LogMsg("Critical: Unable to create " + OutputDir + OutputFile)
-    EndIf
-    LogMsg("Info: Creating " + OutputFile)
-    Documents = 0
-    ; Write Header
-    WriteData(OutputFileNr, *HeaderBuffer, HeaderLength)
-    WriteData(OutputFileNr, *BDT, 17)
-    PreviousOutputFile = OutputFile
+    InputFileNr = ReadFile(#PB_Any, JobDir + InputFile)
+    If InputFileNr = 0 
+      LogMsg("Critical: Unable to read " + JobDir + InputFile)
+    EndIf    
+    InputFileLength = Lof(InputFileNr)
+    *Buffer = AllocateMemory(InputFileLength)
+    ReadData(InputFileNr, *Buffer, InputFileLength)
+    CloseFile(InputFileNr)
+    WriteData(OutputFileNr, *Buffer, InputFileLength)
+    Documents + 1    
+    ;}
+  Next
+  
+  If OutputFileNr > 0
+    ;{ Close OuputFile
+    WriteData(OutputFileNr, *EDT, 17)
+    CloseFile(OutputFileNr)
+    OutputFileNr = 0
+    RenameFile(OutputDir + OutputFile.s, "/c/Temp/" + ReplaceString(OutputFile, ".tmp", ".afp"))
+    LogMsg("Info: " + JobName + ".afp created with " + Str(Documents) + " documents")
+    ;}
   EndIf
   
-  InputFileNr = ReadFile(#PB_Any, JobDir + InputFile)
-  If InputFileNr = 0 
-    LogMsg("Critical: Unable to read " + JobDir + InputFile)
-  EndIf  
-  
-  InputFileLength = Lof(InputFileNr)
-  *Buffer = AllocateMemory(InputFileLength)
-  ReadData(InputFileNr, *Buffer, InputFileLength)
-  CloseFile(InputFileNr)
-  WriteData(OutputFileNr, *Buffer, InputFileLength)
-  Documents + 1
-
+  Done.s = JobDir + ".done"
+  Done = ReplaceString(Done, "/.", ".")
+RenameFile(JobDir, Done)
 Return
 ;}
-
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 166
-; FirstLine = 163
-; Folding = --
+; CursorPosition = 122
+; FirstLine = 14
+; Folding = AM+
 ; EnableXP

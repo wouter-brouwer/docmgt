@@ -15,6 +15,147 @@
 
 ;}
 
+Procedure.s HexString(String.s)
+
+  For i = 1 To Len(String)
+    HexString.s + Right("0" + Hex(Asc(Mid(String,i,1))),2)
+  Next i
+  
+  ProcedureReturn HexString
+
+EndProcedure
+
+;{ Maak Barcode records
+
+Procedure HexLen(String.s)
+  String = ReplaceString(String, " ", "")
+  ProcedureReturn Len(String) / 2
+EndProcedure
+
+Procedure.s Hex2(Number, Len)
+  ProcedureReturn RSet(Hex(Number, #PB_Long), Len, "0")
+EndProcedure
+
+Procedure PokeHexString(*Buffer, String.s)
+  String = ReplaceString(String, " ", "")
+  ;Debug String
+  Len = Len(String) / 2
+  OffSet = 0
+  For i = 1 To Len(String) Step 2
+    ;Debug Str(i)
+    If i = 17 
+      ;CallDebugger
+    EndIf
+    ;Debug Mid(String, i, 1)
+    h = Asc(Mid(String,i,1))
+    h - 48
+    If h > 10
+      h - 7
+    EndIf
+    ;Debug Mid(String, i+1, 1)
+    l = Asc(Mid(String,i+1,1))
+    l - 48
+    If l > 10
+      l - 7
+    EndIf
+    PokeC(*Buffer + OffSet, h * 16 + l)
+    OffSet + 1
+  Next i
+  ProcedureReturn Len
+EndProcedure
+
+; BBC Begin Barcode Object
+HexString.s = "D3A8EB 00 0000" ; SFID + Flags + Reserved
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BBC = AllocateMemory(HexLen(HexString))
+BBClen = PokeHexString(*BBC, HexString)
+
+
+; BOG Begin Object Environment Group
+HexString = "D3A8C7 00 0000" ; SFID + Flags + Reserved
+HexString + "F0F0F0F0F0F0F1" ; (OEG Name)
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BOG = AllocateMemory(HexLen(HexString))
+BOGlen = PokeHexString(*BOG, HexString)
+
+; OBD Object Area Descriptor
+HexString = "D3A66B 00 0000" ; SFID + Flags + Reserved
+HexString + "03 43 01" ; Descriptor Position
+HexString + "08 4B 00 00 0960 0960" ; Measurement Units
+HexString + "09 4C 02 000000 000000" ; Object Area Size
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*OBD = AllocateMemory(HexLen(HexString))
+OBDlen = PokeHexString(*OBD, HexString)
+
+; OBP Object Area Position
+HexString = "D3AC6B 00 0000" ; SFID + Flags + Reserved
+HexString + "01" ; Position ID
+HexString + "17" ; Len
+HexString + "000060 000F00" ; X Y-as origin
+HexString + "0000 0000" ; X Y rotation
+HexString + "00" ; Reserved
+HexString + "000000 000000" ; X Y origin object content
+HexString + "0000 2D00 00" 
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*OBP = AllocateMemory(HexLen(HexString))
+OBPlen = PokeHexString(*OBP, HexString)
+
+; BDD Barcode Data Descriptor
+HexString = "D3A6EB 00 0000" ; SFID + Flags + Reserved
+; BSD Barcode Symbol Descriptor
+HexString + "00" ; Unit Base 00 = 10" 01 = 10cm
+HexString + "00" ; Reserved
+HexString + "0960" ; Units per unitbase X
+HexString + "0960" ; Units per unitbase Y
+HexString + "0000" ; Width presentationspace
+HexString + "0000" ; Length presentationspace
+HexString + "0000" ; Desired symbol width
+HexString + "1C 00"; Data Matrix
+HexString + "FF"   ; Font
+HexString + "FFFF" ; Color
+HexString + "10"   ; ModuleWidth in mils
+HexString + "0000" ; ElementHeight
+HexString + "00"   ; Height Multiplier
+HexString + "0000" ;WideNarrow ratio
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BDD = AllocateMemory(HexLen(HexString) + 5)
+BDDlen = PokeHexString(*BDD, HexString)
+
+; EOG End Object Environment Group
+HexString = "D3A9C7 00 0000" ; SFID + Flags + Reserved
+HexString + "F0F0F0F0F0F0F1" ; (OEG Name)
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*EOG = AllocateMemory(HexLen(HexString) + 5)
+EOGlen = PokeHexString(*EOG, HexString)
+
+; BDA Barcode Data
+HexString = "D3EEEB 00 0000" ; SFID + Flags + Reserved
+; BSA Barcode Symbol Data
+HexString + "00" ; Barcode flags
+HexString + "0000 0000"; x + y Coordinates
+HexString + "00" ; Control flags
+HexString + "0010" ; Row size
+HexString + "0010" ; Number of rows
+HexString + "00" ; Sequence indicator
+HexString + "00" ; Total symbols
+HexString + "01" ; FileID byte 1
+HexString + "01" ; FileID byte 2
+HexString + "01" ; Special function flags
+Hexstring + HexString("123456001234560000100002000000111") ; Data
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BDA = AllocateMemory(HexLen(HexString) + 5)
+BDAlen = PokeHexString(*BDA, HexString)
+
+; EBC End Barcode Object
+HexString.s = "D3A9EB 00 0000" ; SFID + Flags + Reserved
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*EBC = AllocateMemory(HexLen(HexString) + 5)
+EBClen = PokeHexString(*EBC, HexString)
+
+
+
+;}
+
 Global LogDir.s
 
 Procedure LogMsg(Msg.s)
@@ -52,16 +193,6 @@ Procedure LogMsg(Msg.s)
     End
   EndIf
   
-EndProcedure
-
-Procedure.s HexString(String.s)
-
-  For i = 1 To Len(String)
-    HexString.s + Right("0" + Hex(Asc(Mid(String,i,1))),2)
-  Next i
-  
-  ProcedureReturn HexString
-
 EndProcedure
 
 Procedure DebugHexMem(*Pointer, Length)
@@ -131,7 +262,7 @@ Procedure.s PeekHexString(*Pointer, Length)
   ProcedureReturn s
 EndProcedure
 
-Procedure PokeHexString(*Pointer,String.s)
+Procedure xPokeHexString(*Pointer,String.s)
   OffSet = 0
   For i = 1 To Len(String) Step 2
     h = Asc(Mid(String,i,1))
@@ -198,20 +329,16 @@ LogMsg(#Prog + " started")
 ;}
 
 ;{ Main loop
-While FileSize(#Prog + ".stop") = -1 ; Zolang er geen SplitAFP.stop bestand is
+;While FileSize(#Prog + ".stop") = -1 ; Zolang er geen SplitAFP.stop bestand is
 
   ;{ Verwerk alle AFP bestanden uit de input directory
   If ExamineDirectory(0, InputDir, "*.afp")
-    
     While NextDirectoryEntry(0)
-      
       If DirectoryEntryType(0) = #PB_DirectoryEntry_File
         InputFile.s = DirectoryEntryName(0)
         Gosub VerwerkFile
       EndIf
-      
     Wend
-    
     FinishDirectory(0)
   EndIf
   ;}
@@ -219,7 +346,7 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen SplitAFP.stop bestand is
   LogMsg("") ; Om logfile te kunnen closen bij geen activiteit
   Delay(100) ; CPU besparing
   
-Wend
+;Wend
 ;}
   
 ;{ Afsluiting
@@ -293,12 +420,17 @@ ClearList(OutputFiles())
     RecordNr + 1
     
     Triplet.s = HexString(PeekS(*Record,3))
-    
     If Triplet = "D3A8A8" ; BDT
       Header = 0
       CloseFile(HeaderFileNr)
       HeaderFileNr = 0
+      Skip = 1
     EndIf
+    
+    If Header = 0
+      ;Debug Triplet
+    EndIf
+  
     
     If Triplet = "D3EEEE" ; NOP
     EndIf
@@ -307,27 +439,51 @@ ClearList(OutputFiles())
       Pages + 1
     EndIf
     
+    If Triplet = "D3A9AF" ; EPG
+      
+      WriteData(OutputFileNr, *BBC, BBClen)
+      WriteData(OutputFileNr, *BOG, BOGlen)
+      WriteData(OutputFileNr, *OBD, OBDlen)
+      WriteData(OutputFileNr, *OBP, OBPlen)
+      WriteData(OutputFileNr, *BDD, BDDlen)
+      WriteData(OutputFileNr, *EOG, EOGlen)
+      WriteData(OutputFileNr, *BDA, BDAlen)
+      WriteData(OutputFileNr, *EBC, EBClen)
+     
+    EndIf
+    
     If Triplet = "D3A9A8" ; EDT
+      If OutputFileNr > 0
+        CloseFile(OutputFileNr)
+        OutputFileNr = 0
+        AddElement(OutputFiles())
+        OutputFiles() = ReplaceString(OutputFile.s, ".", "_P" + Str(Pages) + ".")
+        RenameFile(TmpSubDir + OutputFile, TmpSubDir + OutputFiles()) 
+      EndIf
+      Skip = 1
     EndIf
     
     If Triplet = "D3A8AD" ; BNG
-      If PreviousTriplet <> Triplet 
-        NamedGroup = 1
-        NamedGroupNr + 1
-        If Date() > LastRun + 60
-          LastRun = Date()
-          LogMsg("Info: " + Str(NamedGroupNr) + " Documents")
-        EndIf
-        OutputFile.s = OutputBase + "_0" + RSet(Str(NamedGroupNr), 6, "0") + ".afp"
-        OutputFileNr = CreateFile(#PB_Any, TmpSubDir + OutputFile)
-        If OutputFileNr = 0 
-          Error = "Unable to create " + TmpSubDir + OutputFile
-          Break
-        EndIf
-        Pages = 0
-      Else
-        Skip = 1
+      If OutputFileNr > 0
+        CloseFile(OutputFileNr)
+        OutputFileNr = 0
+        AddElement(OutputFiles())
+        OutputFiles() = ReplaceString(OutputFile.s, ".", "_P" + Str(Pages) + ".")
+        RenameFile(TmpSubDir + OutputFile, TmpSubDir + OutputFiles()) 
       EndIf
+      NamedGroupLevel + 1
+      NamedGroupNr + 1
+      If Date() > LastRun + 60
+        LastRun = Date()
+        LogMsg("Info: " + Str(NamedGroupNr) + " Documents")
+      EndIf
+      OutputFile.s = OutputBase + "_0" + RSet(Str(NamedGroupNr), 6, "0") + ".afp"
+      OutputFileNr = CreateFile(#PB_Any, TmpSubDir + OutputFile)
+      If OutputFileNr = 0 
+        Error = "Unable to create " + TmpSubDir + OutputFile
+        Break
+      EndIf
+      Pages = 0
     EndIf
     
     If Header = 1
@@ -337,7 +493,7 @@ ClearList(OutputFiles())
       WriteData(HeaderFileNr, *Record, RecordLength)
     EndIf
       
-    If Header = 0 And NamedGroup = 1 And Skip = 0
+    If Header = 0 And Skip = 0
       WriteCharacter(OutputFileNr, l0)
       WriteCharacter(OutputFileNr, l1)
       WriteCharacter(OutputFileNr, l2)
@@ -345,13 +501,7 @@ ClearList(OutputFiles())
     EndIf
     
     If Triplet = "D3A9AD" ; ENG
-      NamedGroup = 0
-      If PreviousTriplet <> Triplet
-        CloseFile(OutputFileNr)
-        AddElement(OutputFiles())
-        OutputFiles() = ReplaceString(OutputFile, ".", "_P" + Str(Pages) + ".")
-        RenameFile(TmpSubDir + OutputFile, TmpSubDir + OutputFiles()) 
-      EndIf
+      NamedGroupLevel - 1
     EndIf
     
     PreviousTriplet.s = Triplet
@@ -383,6 +533,8 @@ ClearList(OutputFiles())
   Next
   
   DeleteDirectory(TmpSubDir, "")
+  
+Return
   
   If RenameFile(InputDir + InputFile, ProcessedDir + InputFile)
     LogMsg(InputDir + InputFile + " moved to " + ProcessedDir)  
@@ -418,6 +570,7 @@ VerwerkFileError:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 14
-; Folding = AA1
+; CursorPosition = 93
+; FirstLine = 38
+; Folding = FAs0
 ; EnableXP

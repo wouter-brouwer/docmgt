@@ -221,7 +221,7 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
   Else
     ; Voor werkelijkheid de systeemdatum en tijd nemen
     Datum.s = FormatDate("%dd-%mm-%yyyy", Date())
-    Tijd.s = FormatDate("%hh:%ii", Date())
+    Tijd.s = FormatDate("%hh:%ii:%ss", Date())
   EndIf  
 ;}
   
@@ -258,7 +258,7 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
   EndIf
   ;}
 
-  If Tijd <> VorigeTijd.s ; Nieuwe minuut
+  If Tijd <> VorigeTijd.s; Nieuwe minuut
     
     Debug "Verwerking: " + Datum + " " + Tijd
     
@@ -290,7 +290,7 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
       Line = ReplaceString(Line, ",", " ")
       Line = ReplaceString(Line, ";", " ")
       Line = ReplaceString(Line, "  ", " ")
-      LogMsg("Regel: "+ Line)
+      ;LogMsg("Regel: "+ Line)
       For i = 1 To CountString(Line, " ")
         Woord.s = StringField(Line, i, " ")
         If Woord = "stroom"
@@ -483,15 +483,16 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
       ;}
       
       ;{ Check of er niet nog nieuwe bestanden zijn
-      If NietJonger > 0
+      If NietJonger >= 0
         Match = 0
-        Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii", Datum + " " + Tijd) - Ouder          
+        Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii:%ss", Datum + " " + Tijd) - 1          
         For i = 1 To CountString(Stromen, ";")
           If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
             While NextDirectoryEntry(0)
               If DirectoryEntryType(0) = #PB_DirectoryEntry_File
                 If DirectoryEntryDate(0, #PB_Date_Modified) >= Peil
                   Match + 1
+                  Break 2
                 EndIf
               EndIf
             Wend
@@ -646,8 +647,8 @@ VerwerkFile:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 576
-; FirstLine = 81
-; Folding = ASA1-
+; CursorPosition = 494
+; FirstLine = 169
+; Folding = AWhk-
 ; EnableUnicode
 ; EnableXP
