@@ -1,105 +1,107 @@
+#Prog = "MergeAFP"
+
+;{ Documentatie
+
 ; neem de header en alle files en plak ze aan elkaar
+; Voeg 2D Matrix codes toe
+; Schrijf MRDF
 
-Procedure LogMsg(Msg.s)
-  TimeStamp.s = FormatDate("%dd-%mm-%yyyy %hh:%ii:%ss", Date())
-  Regel.s = TimeStamp + " - " + Msg
-  Debug Regel
-EndProcedure
+;}
 
-Procedure.s HexString(String.s)
+IncludeFile "Common.pbi"
 
-  For i = 1 To Len(String)
-    HexString.s + Right("0" + Hex(Asc(Mid(String,i,1))),2)
-  Next i
-  
-  ProcedureReturn HexString
+IncludeFile "AFP.pbi"
 
-EndProcedure
+;{ Maak Barcode records
 
-Procedure DebugHexMem(*Pointer, Length)
-    s.s = ""
-    For i = 0 To Length - 1
-      s + Right("0" + Hex(PeekC(*Pointer + i)),2) + " "
-      If Len(s) >= 3 * 16
-        Debug s
-        s = ""
-      EndIf
-    Next i
-    If s
-      Debug s
-    EndIf
-  ;CallDebugger
-EndProcedure
+; BBC Begin Barcode Object
+HexString.s = BBC + "00 0000" ; SFID + Flags + Reserved
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BBC = AllocateMemory(HexLen(HexString))
+BBClen = PokeHexString(*BBC, HexString)
 
-Procedure.s EbcdicToAscii(String.s)
-  code.s = Space(75)
-  code + ".<(+|&" + Space(9)
-  code + "!$*); -/" + Space(9)
-  code + ",%_>?" + Space(10)
-  code + ":#@'="+Chr(34)+" "
-  code + "abcdefghi" + Space(7)
-  code + "jklmnopqr" + Space(8)
-  code + "stuvwxyz" + Space(23)
-  code + "ABCDEFGHI" + Space(7)
-  code + "JKLMNOPQR" + Space(8)
-  code + "STUVWXYZ" + Space(6)
-  code + "0123456789" + Space(6)
-  For i = 1 To Len(String)
-    Letter = Asc(Mid(String,i,1)) + 1
-    Result.s + Mid(Code,Letter,1)
-  Next i
-  ProcedureReturn Result
-EndProcedure
 
-Procedure.s AsciiToEbcdic(String.s)
-  code.s = Space(75)
-  code + ".<(+|&" + Space(9)
-  code + "!$*); -/" + Space(9)
-  code + ",%_>?" + Space(10)
-  code + ":#@'="+Chr(34)+" "
-  code + "abcdefghi" + Space(7)
-  code + "jklmnopqr" + Space(8)
-  code + "stuvwxyz" + Space(23)
-  code + "ABCDEFGHI" + Space(7)
-  code + "JKLMNOPQR" + Space(8)
-  code + "STUVWXYZ" + Space(6)
-  code + "0123456789" + Space(6)
-  For i = 1 To Len(String)
-    If Mid(String,i,1) <> " "
-      p = FindString(code, Mid(String,i,1),0) - 1
-    Else
-      p = 64
-    EndIf
-    Result.s + Chr(p)
-  Next i
-  ProcedureReturn Result
-EndProcedure
+; BOG Begin Object Environment Group
+HexString = BOG + "00 0000" ; SFID + Flags + Reserved
+HexString + HexString(AsciiToEBCDIC("2DMATRIX")) ; (OEG Name)
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BOG = AllocateMemory(HexLen(HexString))
+BOGlen = PokeHexString(*BOG, HexString)
 
-Procedure.s PeekHexString(*Pointer, Length)
-  s.s = ""
-  For i = 0 To Length - 1
-    s + Right("0" + Hex(PeekC(*Pointer + i)),2)
-  Next i
-  ProcedureReturn s
-EndProcedure
+; OBD Object Area Descriptor
+HexString = "D3A66B 00 0000" ; SFID + Flags + Reserved
+HexString + "03 43 01" ; Descriptor Position
+HexString + "08 4B 00 00 0960 0960" ; Measurement Units
+HexString + "09 4C 02 000000 000000" ; Object Area Size
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*OBD = AllocateMemory(HexLen(HexString))
+OBDlen = PokeHexString(*OBD, HexString)
 
-Procedure PokeHexString(*Pointer,String.s)
-  OffSet = 0
-  For i = 1 To Len(String) Step 2
-    h = Asc(Mid(String,i,1))
-    h - 48
-    If h > 10
-      h - 7
-    EndIf
-    l = Asc(Mid(String,i+1,1))
-    l - 48
-    If l > 10
-      l - 7
-    EndIf
-    PokeC(*Pointer + OffSet, h * 16 + l)
-    OffSet + 1
-  Next i
-EndProcedure
+; OBP Object Area Position
+HexString = "D3AC6B 00 0000" ; SFID + Flags + Reserved
+HexString + "01" ; Position ID
+HexString + "17" ; Len
+HexString + "000060 000F00" ; X Y-as origin
+HexString + "0000 0000" ; X Y rotation
+HexString + "00" ; Reserved
+HexString + "000000 000000" ; X Y origin object content
+HexString + "0000 2D00 00" 
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*OBP = AllocateMemory(HexLen(HexString))
+OBPlen = PokeHexString(*OBP, HexString)
+
+; BDD Barcode Data Descriptor
+HexString = "D3A6EB 00 0000" ; SFID + Flags + Reserved
+; BSD Barcode Symbol Descriptor
+HexString + "00" ; Unit Base 00 = 10" 01 = 10cm
+HexString + "00" ; Reserved
+HexString + "0960" ; Units per unitbase X
+HexString + "0960" ; Units per unitbase Y
+HexString + "0000" ; Width presentationspace
+HexString + "0000" ; Length presentationspace
+HexString + "0000" ; Desired symbol width
+HexString + "1C 00"; Data Matrix
+HexString + "FF"   ; Font
+HexString + "FFFF" ; Color
+HexString + "10"   ; ModuleWidth in mils
+HexString + "0000" ; ElementHeight
+HexString + "00"   ; Height Multiplier
+HexString + "0000" ;WideNarrow ratio
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BDD = AllocateMemory(HexLen(HexString) + 5)
+BDDlen = PokeHexString(*BDD, HexString)
+
+; EOG End Object Environment Group
+HexString = "D3A9C7 00 0000" ; SFID + Flags + Reserved
+HexString + HexString(AsciiToEBCDIC("2DMATRIX")) ; (OEG Name)
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*EOG = AllocateMemory(HexLen(HexString) + 5)
+EOGlen = PokeHexString(*EOG, HexString)
+
+; BDA Barcode Data
+HexString = "D3EEEB 00 0000" ; SFID + Flags + Reserved
+; BSA Barcode Symbol Data
+HexString + "00" ; Barcode flags
+HexString + "0000 0000"; x + y Coordinates
+HexString + "00" ; Control flags
+HexString + "0010" ; Row size
+HexString + "0010" ; Number of rows
+HexString + "00" ; Sequence indicator
+HexString + "00" ; Total symbols
+HexString + "01" ; FileID byte 1
+HexString + "01" ; FileID byte 2
+HexString + "01" ; Special function flags
+BDA_Header.s = HexString
+
+; EBC End Barcode Object
+HexString.s = "D3A9EB 00 0000" ; SFID + Flags + Reserved
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*EBC = AllocateMemory(HexLen(HexString) + 5)
+EBClen = PokeHexString(*EBC, HexString)
+
+
+
+;}
 
 ;{ Initialisatie
 
@@ -107,10 +109,16 @@ JobsDir.s = "./documents/jobs/"
 HeaderDir.s = "./documents/headers/"
 OutputDir.s = "./System/hf/afp/"
 
-*BDT = AllocateMemory(17)
-PokeHexString(*BDT, "5a0010d3a8a8000000ffffffffffffffff")
-*EDT = AllocateMemory(17)
-PokeHexString(*EDT, "5a0010d3a9a8000000ffffffffffffffff")
+HexString = BDT + "00 0000 FFFFFFFF FFFFFFFF"
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BDT = AllocateMemory(HexLen(HexString))
+BDTlen = PokeHexString(*BDT, HexString)
+
+HexString = EDT + "00 0000 FFFFFFFF FFFFFFFF"
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*EDT = AllocateMemory(HexLen(HexString))
+EDTlen = PokeHexString(*EDT, HexString)
+
 NewList FileNames.s()
 ;}
 
@@ -152,6 +160,7 @@ VerwerkJob:
   ;}
   
   SortList(FileNames(), #PB_Sort_Ascending)
+  
   ForEach FileNames()
     InputFile.s = FileNames()    
     ;{ VerwerkFile    
@@ -179,7 +188,7 @@ VerwerkJob:
       
       ; Write Header
       WriteData(OutputFileNr, *HeaderBuffer, HeaderLength)
-      WriteData(OutputFileNr, *BDT, 17)
+      WriteData(OutputFileNr, *BDT, BDTlen)
     
       ;}
     EndIf
@@ -187,20 +196,74 @@ VerwerkJob:
     If InputFileNr = 0 
       LogMsg("Critical: Unable to read " + JobDir + InputFile)
     EndIf    
-    InputFileLength = Lof(InputFileNr)
-    *Buffer = AllocateMemory(InputFileLength)
-    ReadData(InputFileNr, *Buffer, InputFileLength)
+    Documents + 1
+    PageNr = 0
+    p = FindString(InputFile, "_P")
+    e = FindString(InputFile, ".")
+    Pages = Val(Mid(InputFile, p + 2, e - p))
+    
+    While Not Eof(InputFileNr)
+      
+      
+      l0.c = ReadCharacter(InputFileNr)
+      If l0 <> 90
+        LogMsg("Critical: " + JobDir + InputFile + " contains invalid AFP")
+      EndIf
+      l1.c = ReadCharacter(InputFileNr)
+      l2.c = ReadCharacter(InputFileNr)
+      
+      RecordLength = l1 * 256 + l2 - 2
+      ReadData(InputFileNr, *AFPRecord, RecordLength)
+      RecordNr + 1
+      
+      ; Structured Field Identifier
+      SFID.s = HexString(PeekS(*AFPRecord,3))
+
+      Select SFID
+        Case BPG
+          PageNr + 1
+        Case EPG
+          WriteData(OutputFileNr, *BBC, BBClen)
+          WriteData(OutputFileNr, *BOG, BOGlen)
+          WriteData(OutputFileNr, *OBD, OBDlen)
+          WriteData(OutputFileNr, *OBP, OBPlen)
+          WriteData(OutputFileNr, *BDD, BDDlen)
+          WriteData(OutputFileNr, *EOG, EOGlen)
+          
+          Barcode.s = StringField(JobName,2,"_")
+          Barcode + RSet(Str(Documents),6,"0")
+          Barcode + RSet(Str(PageNr),5,"0")
+          Barcode + RSet(Str(Pages),5,"0")
+          Barcode + "000000" ; Inserterstations
+          Barcode + "0" ; Quality Check
+          Barcode + "0" ; Edge Mark
+          Barcode + "0" ; Next Channel          
+          Hexstring.s = BDA_Header + HexString(Barcode)
+          HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+          *BDA = AllocateMemory(HexLen(HexString) + 5)
+          BDAlen = PokeHexString(*BDA, HexString)
+      
+          WriteData(OutputFileNr, *BDA, BDAlen)
+          WriteData(OutputFileNr, *EBC, EBClen)
+      EndSelect
+
+      WriteCharacter(OutputFileNr, l0)
+      WriteCharacter(OutputFileNr, l1)
+      WriteCharacter(OutputFileNr, l2)
+      WriteData(OutputFileNr, *AFPRecord, RecordLength)
+    Wend
+    
     CloseFile(InputFileNr)
-    WriteData(OutputFileNr, *Buffer, InputFileLength)
-    Documents + 1    
+  
     ;}
   Next
   
   If OutputFileNr > 0
     ;{ Close OuputFile
-    WriteData(OutputFileNr, *EDT, 17)
+    WriteData(OutputFileNr, *EDT, EDTlen)
     CloseFile(OutputFileNr)
     OutputFileNr = 0
+; TEST
     RenameFile(OutputDir + OutputFile.s, "/c/Temp/" + ReplaceString(OutputFile, ".tmp", ".afp"))
     LogMsg("Info: " + JobName + ".afp created with " + Str(Documents) + " documents")
     ;}
@@ -212,7 +275,7 @@ RenameFile(JobDir, Done)
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 122
-; FirstLine = 14
-; Folding = AM+
+; CursorPosition = 93
+; FirstLine = 48
+; Folding = e0
 ; EnableXP

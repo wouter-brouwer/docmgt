@@ -26,48 +26,18 @@
 
 ;}
 
-Global LogDir.s
+IncludeFile "Common.pbi"
+
 NewList FileNames.s()
 
-Procedure LogMsg(Msg.s)
-  
-  Static LogFileNr, LastRun
-  
-  ; Logfile sluiten als er 10 seconden geen echte logging geweest is
-  If LCase(Msg) = ""
-    If LogFileNr > 0 And Date() > LastRun + 10
-      CloseFile(LogFileNr)
-      LogFileNr = 0
-    EndIf
-    ProcedureReturn
-  EndIf  
-  LastRun = Date()
-  
-  ; Indien nodig de logfile openen
-  If LogFileNr = 0
-    ; Als hij te groot is aan een nieuwe beginnen
-    If FileSize(LogDir + #Prog + ".log") > 1024 * 1024 ; 1 MB
-      RenameFile(LogDir + #Prog + ".log", LogDir + #Prog + FormatDate("_%yyyy-%mm-%dd", Date()) + ".log")
-    EndIf
-    LogFileNr = OpenFile(#PB_Any, LogDir + #Prog + ".log")
-    FileSeek(LogFileNr, Lof(LogFileNr))
-  EndIf
-  
-  ; De boodschap met tijd naar de log schrijven
-  TimeStamp.s = FormatDate("%yyyy-%mm-%dd %hh:%ii:%ss", Date())
-  Regel.s = TimeStamp + " - " + Msg
-  Debug Regel
-  WriteStringN(LogFileNr, Regel)
-  
-  ; Stoppen bij ernstige fout
-  If FindString(LCase(Msg), "critical") = 1
-    End
-  EndIf
-  
-EndProcedure
-
 Procedure IsTijd(Woord.s)
+  If ParseDate("%hh:%ii:%ss", Woord) >= 0
+    ProcedureReturn #True
+  EndIf
   If ParseDate("%hh:%ii", Woord) >= 0
+    ProcedureReturn #True
+  EndIf
+  If ParseDate("%hh", Woord) >= 0
     ProcedureReturn #True
   EndIf
   ProcedureReturn #False
@@ -155,18 +125,6 @@ Procedure DatumMatch(Datum.s, Weekdag, Feestdag, Dag.s)
   
   ProcedureReturn #False
     
-EndProcedure
-
-Procedure.s CheckDirectory(Dir.s)
-  If FileSize(Dir) <> -2
-    If Not CreateDirectory(Dir)
-      LogMsg("Critical: Can not create directory "+ Dir)
-    Else
-      LogMsg("Info: Directory " + Dir + " created")
-    EndIf
-  Else
-    ProcedureReturn Dir + "/"
-  EndIf
 EndProcedure
 
 ;{ Init
@@ -258,7 +216,7 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
   EndIf
   ;}
 
-  If Tijd <> VorigeTijd.s; Nieuwe minuut
+  If Tijd <> VorigeTijd.s And ParseDate("%hh:%ii:%ss", Tijd) % 5 = 0; Elke 5 seconden
     
     Debug "Verwerking: " + Datum + " " + Tijd
     
@@ -377,7 +335,12 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
             EndIf
           Case "Ouder"
             If IsTijd(Woord)
-              Ouder = ParseDate("%hh:%ii", Woord)
+              If CountString(Woord, ":") = 0
+                Woord + ":00:00"
+              ElseIf CountString(Woord, ":") = 1
+                Woord + ":00"
+              EndIf              
+              Ouder = ParseDate("%hh:%ii:%ss", Woord)
             Else
               LogMsg("Error: Ongeldige tijd " + Woord + " in regel " + Line)
               Line = ""
@@ -385,7 +348,12 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
             EndIf
           Case "NietJonger"
             If IsTijd(Woord)
-              NietJonger = ParseDate("%hh:%ii", Woord)
+              If CountString(Woord, ":") = 0
+                Woord + ":00:00"
+              ElseIf CountString(Woord, ":") = 1
+                Woord + ":00"
+              EndIf              
+              NietJonger = ParseDate("%hh:%ii:%ss", Woord)
             Else
               LogMsg("Error: Ongeldige tijd " + Woord + " in regel " + Line)
               Line = ""
@@ -429,7 +397,7 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
       If Tijden <> ""
         Match = 0
         For i = 1 To CountString(Tijden, ";")
-          If Tijd = StringField(Tijden, i, ";")
+          If FindString(Tijd, StringField(Tijden, i, ";")) = 1
             Match + 1
             Break
           EndIf
@@ -445,9 +413,21 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
         Match = 0
         For i = 1 To CountString(Periodes, ";")
           Periode.s = StringField(Periodes, i, ";")
-          Van = ParseDate("%hh:%ii", StringField(Periode,1,"-"))
-          Tot = ParseDate("%hh:%ii", StringField(Periode,2,"-"))
-          Nu = ParseDate("%hh:%ii", Tijd)
+          PeriodeVan.s = StringField(Periode,1,"-")
+          If CountString(PeriodeVan, ":") = 0
+            PeriodeVan + ":00:00"
+          ElseIf CountString(PeriodeVan, ":") = 1
+            PeriodeVan + ":00"
+          EndIf
+          PeriodeTot.s = StringField(Periode,2,"-")
+          If CountString(PeriodeTot, ":") = 0
+            PeriodeTot + ":00:00"
+          ElseIf CountString(PeriodeTot, ":") = 1
+            PeriodeTot + ":00"
+          EndIf
+          Van = ParseDate("%hh:%ii:%ss", PeriodeVan)
+          Tot = ParseDate("%hh:%ii:%ss", PeriodeTot)
+          Nu = ParseDate("%hh:%ii:%ss", Tijd)
           If Nu >= Van And Nu <= Tot
             Match + 1
             Break
@@ -462,7 +442,7 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
       ;{ Check of er al oude bestanden zijn
       If Ouder > 0
         Match = 0
-        Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii", Datum + " " + Tijd) - Ouder          
+        Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii:%ss", Datum + " " + Tijd) - Ouder          
         For i = 1 To CountString(Stromen, ";")
           If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
             While NextDirectoryEntry(0)
@@ -485,7 +465,7 @@ While FileSize(#Prog + ".stop") = -1 ; Zolang er geen MakeJobs.stop bestand is
       ;{ Check of er niet nog nieuwe bestanden zijn
       If NietJonger >= 0
         Match = 0
-        Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii:%ss", Datum + " " + Tijd) - 1          
+        Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii:%ss", Datum + " " + Tijd) - NietJonger         
         For i = 1 To CountString(Stromen, ";")
           If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
             While NextDirectoryEntry(0)
@@ -647,8 +627,8 @@ VerwerkFile:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 494
-; FirstLine = 169
-; Folding = AWhk-
+; CursorPosition = 218
+; FirstLine = 25
+; Folding = gFA5
 ; EnableUnicode
 ; EnableXP
