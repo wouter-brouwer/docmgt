@@ -84,100 +84,6 @@ Procedure.s Hex2(Number, Len)
   ProcedureReturn RSet(Hex(Number, #PB_Long), Len, "0")
 EndProcedure
 
-;{ Maak Barcode records
-
-; BBC Begin Barcode Object
-HexString.s = "D3A8EB 00 0000" ; SFID + Flags + Reserved
-HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-*BBC = AllocateMemory(HexLen(HexString))
-BBClen = PokeHexString(*BBC, HexString)
-
-
-; BOG Begin Object Environment Group
-HexString = "D3A8C7 00 0000" ; SFID + Flags + Reserved
-HexString + "F0F0F0F0F0F0F1" ; (OEG Name)
-HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-*BOG = AllocateMemory(HexLen(HexString))
-BOGlen = PokeHexString(*BOG, HexString)
-
-; OBD Object Area Descriptor
-HexString = "D3A66B 00 0000" ; SFID + Flags + Reserved
-HexString + "03 43 01" ; Descriptor Position
-HexString + "08 4B 00 00 0960 0960" ; Measurement Units
-HexString + "09 4C 02 000000 000000" ; Object Area Size
-HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-*OBD = AllocateMemory(HexLen(HexString))
-OBDlen = PokeHexString(*OBD, HexString)
-
-; OBP Object Area Position
-HexString = "D3AC6B 00 0000" ; SFID + Flags + Reserved
-HexString + "01" ; Position ID
-HexString + "17" ; Len
-HexString + "000060 000F00" ; X Y-as origin
-HexString + "0000 0000" ; X Y rotation
-HexString + "00" ; Reserved
-HexString + "000000 000000" ; X Y origin object content
-HexString + "0000 2D00 00" 
-HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-*OBP = AllocateMemory(HexLen(HexString))
-OBPlen = PokeHexString(*OBP, HexString)
-
-; BDD Barcode Data Descriptor
-HexString = "D3A6EB 00 0000" ; SFID + Flags + Reserved
-; BSD Barcode Symbol Descriptor
-HexString + "00" ; Unit Base 00 = 10" 01 = 10cm
-HexString + "00" ; Reserved
-HexString + "0960" ; Units per unitbase X
-HexString + "0960" ; Units per unitbase Y
-HexString + "0000" ; Width presentationspace
-HexString + "0000" ; Length presentationspace
-HexString + "0000" ; Desired symbol width
-HexString + "1C 00"; Data Matrix
-HexString + "FF"   ; Font
-HexString + "FFFF" ; Color
-HexString + "10"   ; ModuleWidth in mils
-HexString + "0000" ; ElementHeight
-HexString + "00"   ; Height Multiplier
-HexString + "0000" ;WideNarrow ratio
-HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-*BDD = AllocateMemory(HexLen(HexString) + 5)
-BDDlen = PokeHexString(*BDD, HexString)
-
-; EOG End Object Environment Group
-HexString = "D3A9C7 00 0000" ; SFID + Flags + Reserved
-HexString + "F0F0F0F0F0F0F1" ; (OEG Name)
-HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-*EOG = AllocateMemory(HexLen(HexString) + 5)
-EOGlen = PokeHexString(*EOG, HexString)
-
-; BDA Barcode Data
-HexString = "D3EEEB 00 0000" ; SFID + Flags + Reserved
-; BSA Barcode Symbol Data
-HexString + "00" ; Barcode flags
-HexString + "0000 0000"; x + y Coordinates
-HexString + "00" ; Control flags
-HexString + "0010" ; Row size
-HexString + "0010" ; Number of rows
-HexString + "00" ; Sequence indicator
-HexString + "00" ; Total symbols
-HexString + "01" ; FileID byte 1
-HexString + "01" ; FileID byte 2
-HexString + "01" ; Special function flags
-Hexstring + HexString("123456001234560000100002000000111") ; Data
-HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-*BDA = AllocateMemory(HexLen(HexString) + 5)
-BDAlen = PokeHexString(*BDA, HexString)
-
-; EBC End Barcode Object
-HexString.s = "D3A9EB 00 0000" ; SFID + Flags + Reserved
-HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-*EBC = AllocateMemory(HexLen(HexString) + 5)
-EBClen = PokeHexString(*EBC, HexString)
-
-
-
-;}
-
 Procedure DebugHexMem(*Pointer, Length)
     s.s = ""
     For i = 0 To Length - 1
@@ -246,16 +152,14 @@ Procedure.s PeekHexString(*Pointer, Length)
 EndProcedure
 
 Procedure.s CheckDirectory(Dir.s)
-  If FileSize(Dir) <> -2
-    If Not CreateDirectory(Dir)
-      LogMsg("Critical: Can not create directory "+ Dir)
-    Else
-      LogMsg("Info: Directory " + Dir + " created")
-    EndIf
+  rc = FileSize(Dir)
+  If rc <> -2
+    LogMsg("Critical: Missing directory "+ Dir)
   Else
     ProcedureReturn Dir + "/"
   EndIf
 EndProcedure
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; Folding = Ag
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 156
+; Folding = A5
 ; EnableXP

@@ -12,6 +12,8 @@ IncludeFile "Common.pbi"
 
 IncludeFile "AFP.pbi"
 
+IncludeFile "StreamInfo.pbi"
+
 ;{ Maak Barcode records
 
 ; BBC Begin Barcode Object
@@ -29,44 +31,45 @@ HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 BOGlen = PokeHexString(*BOG, HexString)
 
 ; OBD Object Area Descriptor
-HexString = "D3A66B 00 0000" ; SFID + Flags + Reserved
+HexString = OBD + "00 0000" ; SFID + Flags + Reserved
 HexString + "03 43 01" ; Descriptor Position
 HexString + "08 4B 00 00 0960 0960" ; Measurement Units
-HexString + "09 4C 02 000000 000000" ; Object Area Size
+HexString + "09 4C 02 00021C 0000F0" ; Object Area Size
 HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *OBD = AllocateMemory(HexLen(HexString))
 OBDlen = PokeHexString(*OBD, HexString)
 
 ; OBP Object Area Position
-HexString = "D3AC6B 00 0000" ; SFID + Flags + Reserved
+HexString = OBP + "00 0000" ; SFID + Flags + Reserved
 HexString + "01" ; Position ID
 HexString + "17" ; Len
-HexString + "000060 000F00" ; X Y-as origin
-HexString + "0000 0000" ; X Y rotation
+;HexString + "000060 000F00" ; X Y-as origin
+HexString + "0000CC 000744" ; X Y-as origin
+HexString + "8700 0000" ; X Y rotation
 HexString + "00" ; Reserved
 HexString + "000000 000000" ; X Y origin object content
-HexString + "0000 2D00 00" 
+HexString + "0000 2D00 01" 
 HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *OBP = AllocateMemory(HexLen(HexString))
 OBPlen = PokeHexString(*OBP, HexString)
 
 ; BDD Barcode Data Descriptor
-HexString = "D3A6EB 00 0000" ; SFID + Flags + Reserved
+HexString = BDD + "00 0000" ; SFID + Flags + Reserved
 ; BSD Barcode Symbol Descriptor
 HexString + "00" ; Unit Base 00 = 10" 01 = 10cm
 HexString + "00" ; Reserved
 HexString + "0960" ; Units per unitbase X
 HexString + "0960" ; Units per unitbase Y
-HexString + "0000" ; Width presentationspace
-HexString + "0000" ; Length presentationspace
+HexString + "021C" ; Width presentationspace
+HexString + "00F0" ; Length presentationspace
 HexString + "0000" ; Desired symbol width
 HexString + "1C 00"; Data Matrix
 HexString + "FF"   ; Font
 HexString + "FFFF" ; Color
-HexString + "10"   ; ModuleWidth in mils
-HexString + "0000" ; ElementHeight
-HexString + "00"   ; Height Multiplier
-HexString + "0000" ;WideNarrow ratio
+HexString + "07"   ; ModuleWidth in mils
+HexString + "003C" ; ElementHeight
+HexString + "01"   ; Height Multiplier
+HexString + "00C8" ;WideNarrow ratio
 HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *BDD = AllocateMemory(HexLen(HexString) + 5)
 BDDlen = PokeHexString(*BDD, HexString)
@@ -82,7 +85,7 @@ EOGlen = PokeHexString(*EOG, HexString)
 HexString = "D3EEEB 00 0000" ; SFID + Flags + Reserved
 ; BSA Barcode Symbol Data
 HexString + "00" ; Barcode flags
-HexString + "0000 0000"; x + y Coordinates
+HexString + "00CC 00CC"; x + y Coordinates
 HexString + "00" ; Control flags
 HexString + "0010" ; Row size
 HexString + "0010" ; Number of rows
@@ -99,11 +102,15 @@ HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *EBC = AllocateMemory(HexLen(HexString) + 5)
 EBClen = PokeHexString(*EBC, HexString)
 
-
-
 ;}
 
 ;{ Initialisatie
+
+;InstelHoekjeA4Len = ?EndInstelHoekjeA4 - ?InstelHoekjeA4
+;*InstelHoekjeA4 = ?InstelHoekjeA4
+
+InstelHoekjeA5Len = ?EndInstelHoekjeA5 - ?InstelHoekjeA5
+*InstelHoekjeA5 = ?InstelHoekjeA5
 
 JobsDir.s = "./documents/jobs/"
 HeaderDir.s = "./documents/headers/"
@@ -122,13 +129,13 @@ EDTlen = PokeHexString(*EDT, HexString)
 NewList FileNames.s()
 ;}
 
-Repeat
+;Repeat
 ;{ Loop door de jobs
 If ExamineDirectory(0, JobsDir, "*.*")
   While NextDirectoryEntry(0)
     If DirectoryEntryType(0) = #PB_DirectoryEntry_Directory
       JobName.s = DirectoryEntryName(0)
-      If Left(JobName, 1) <> "." And Right(JobName, 5) <> ".done"
+      If Left(JobName, 1) <> "." And Right(JobName, 5) <> ".busy" And Right(JobName, 5) <> ".done"
         JobDir.s = JobsDir + JobName + "/"
         Gosub VerwerkJob
       EndIf
@@ -138,13 +145,15 @@ If ExamineDirectory(0, JobsDir, "*.*")
 EndIf
 ;}
 Delay(1000)
-ForEver
+;ForEver
 End
 
 ;{ VerwerkJob:
 VerwerkJob:
 
   LogMsg("Processing job " + JobName)
+
+  Stroom.s = StringField(JobName, 1, "_")
 
   ;{ Zet de filenamen in een list om ze gesorteerd te kunnen verwerken
   ClearList(FileNames())
@@ -211,8 +220,8 @@ VerwerkJob:
       EndIf
       l1.c = ReadCharacter(InputFileNr)
       l2.c = ReadCharacter(InputFileNr)
-      
       RecordLength = l1 * 256 + l2 - 2
+      
       ReadData(InputFileNr, *AFPRecord, RecordLength)
       RecordNr + 1
       
@@ -223,12 +232,23 @@ VerwerkJob:
         Case BPG
           PageNr + 1
         Case EPG
-          WriteData(OutputFileNr, *BBC, BBClen)
-          WriteData(OutputFileNr, *BOG, BOGlen)
-          WriteData(OutputFileNr, *OBD, OBDlen)
-          WriteData(OutputFileNr, *OBP, OBPlen)
-          WriteData(OutputFileNr, *BDD, BDDlen)
-          WriteData(OutputFileNr, *EOG, EOGlen)
+          ; <<< TEST
+          ;WriteData(OutputFileNr, *BBC, BBClen)          
+          ;WriteData(OutputFileNr, *BOG, BOGlen)
+          ;WriteData(OutputFileNr, *OBD, OBDlen)
+          ;WriteData(OutputFileNr, *OBP, OBPlen)
+          ;WriteData(OutputFileNr, *BDD, BDDlen)
+          ;WriteData(OutputFileNr, *EOG, EOGlen)
+          
+          ; of op basis van de page descriptor
+          If UCase(StreamInfo(Stroom, "PaginaFormaat")) = "A5"
+            WriteData(OutputFileNr, *InstelHoekjeA5, InstelHoekjeA5Len)
+          EndIf
+          
+ ;         If UCase(StreamInfo(Stroom, "PaginaFormaat")) = "A4"
+ ;           WriteData(OutputFileNr, *InstelHoekjeA4, InstelHoekjeA5Len)
+ ;         EndIf
+          
           
           Barcode.s = StringField(JobName,2,"_")
           Barcode + RSet(Str(Documents),6,"0")
@@ -264,18 +284,33 @@ VerwerkJob:
     CloseFile(OutputFileNr)
     OutputFileNr = 0
 ; TEST
-    RenameFile(OutputDir + OutputFile.s, "/c/Temp/" + ReplaceString(OutputFile, ".tmp", ".afp"))
+    ;RenameFile(OutputDir + OutputFile.s, "/c/Temp/" + ReplaceString(OutputFile, ".tmp", ".afp"))
+    RenameFile(OutputDir + OutputFile.s, OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
     LogMsg("Info: " + JobName + ".afp created with " + Str(Documents) + " documents")
     ;}
   EndIf
   
   Done.s = JobDir + ".done"
   Done = ReplaceString(Done, "/.", ".")
-RenameFile(JobDir, Done)
+  ; TEST
+;RenameFile(JobDir, Done)
 Return
 ;}
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 93
-; FirstLine = 48
-; Folding = e0
+
+DataSection
+  
+  ;InstelHoekjeA4:
+  ;  IncludeBinary "instelhoekje.A4.afp"
+  ;EndInstelHoekjeA4:
+    
+  InstelHoekjeA5:
+    ;IncludeBinary "instelhoekje.A5.afp"
+  EndInstelHoekjeA5:
+  
+EndDataSection 
+
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 223
+; FirstLine = 174
+; Folding = e-
 ; EnableXP

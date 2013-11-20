@@ -19,6 +19,8 @@ IncludeFile "Common.pbi"
 
 IncludeFile "AFP.pbi"
 
+IncludeFile "StreamInfo.pbi"
+
 ;{ Initialisatie
 
 NewList OutputFiles.s()
@@ -51,6 +53,15 @@ LockFileNr = CreateFile(#PB_Any, LockFile)
 If LockFileNr = 0 
   LogMsg("Critical: Unable to create " + LockFile + " Program already running?")
 EndIf
+
+; <<< T.b.v. Controle-D fout correctie
+; ENG End Named Group
+HexString.s = "D3A9EB 00 0000 FFFFFFFFFFFFFFFF" ; SFID + Flags + Reserved
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*ENG = AllocateMemory(HexLen(HexString) + 5)
+ENGlen = PokeHexString(*ENG, HexString)
+; <<< T.b.v. Controle-D fout correctie
+
 LogMsg(#Prog + " started")
 ;}
 
@@ -97,6 +108,10 @@ VerwerkFile:
     Goto VerwerkFileError:
   EndIf
   Stroom.s = Left(InputFile, p - 1)
+  If LCase(StreamInfo(Stroom,"Stroom")) <> LCase(Stroom)
+    Error.s = "Onbekende stroom " + Stroom
+    Goto VerwerkFileError:
+  EndIf    
   
   While Date() <= LastRun
     Delay(100)
@@ -107,11 +122,11 @@ VerwerkFile:
   
   OutputBase.s = Stroom + "_" + TimeStamp
   
-  TmpSubDir.s = TmpDir + OutputBase + "/"
-  CheckDirectory(TmpSubDir)
+  CreateDirectory(TmpDir + OutputBase)
+  TmpSubDir.s = CheckDirectory(TmpDir + OutputBase)
   
-  TodoSubDir.s = TodoDir + Stroom + "/"
-  CheckDirectory(TodoSubDir)
+  CreateDirectory(TodoDir + Stroom)
+  TodoSubDir.s = CheckDirectory(TodoDir + Stroom)
   
   InputFileNr = ReadFile(#PB_Any, InputDir + InputFile)
   If InputFileNr = 0
@@ -133,6 +148,10 @@ VerwerkFile:
   PreviousSFID.s = ""
   RecordNr = 0
   Header = 1
+  
+  ; <<< T.b.v. Control-D fout correctie
+  NopRecord = 0
+  
   ;}
   
   ;{ Loop input records
@@ -156,18 +175,46 @@ VerwerkFile:
     SFID.s = HexString(PeekS(*AFPRecord,3))
     
     Select SFID
+        
+      Case NOP
+        ; <<< T.b.v. Control-D fout correctie
+        If HexString(PeekS(*AFPRecord + 6, 8))  = "FFFFFFFFFFFFFFFF"
+          NopRecord = RecordNr
+        EndIf
+        ;
+        
       Case BDT
+        ;Debug "BDT"
         Header = 0
         CloseFile(HeaderFileNr)
         HeaderFileNr = 0
         Skip = 1
+        
       Case BPG
+        ;Debug "BPG"
         Pages + 1
+        
+      Case EPG
+        ;Debug "EPG"
+        ; <<< T.b.v. Control-D fout correctie
+        LastEpgRecord = RecordNr
+        ;
       Case EDT
+        ;Debug "EDT"
         Gosub CloseOutputFile
         Skip = 1
+        
       Case BNG
+        ;Debug "BNG"
+        ; <<< T.b.v. Control-D fout correctie
+        If NopRecord = Record - 1 And LastEpgRecord = Record - 2 And NamedGroupLevel = 1
+          WriteData(OutputFileNr, *ENG, ENGlen)
+          LogMsg("ENG inserted for document " + Str(Documents))
+          NamedGroupLevel - 1
+        EndIf
+        ;
         NamedGroupLevel + 1
+        ;Debug Str(NamedGroupLevel)
         If NamedGroupLevel > 1
           Error = "Bestand bevat geneste Named Groups"
           Break
@@ -189,23 +236,30 @@ VerwerkFile:
         EndIf
         ;}
         Pages = 0
-       EndSelect
+    EndSelect
   
     ;{ Schrijf het record naar het betreffend uitvoerbestand
     If Skip = 0
       If Header = 1
         FileNr = HeaderFileNr
       Else
-        FileNr = OutputFileNr
+        If NamedGroupLevel > 0 Or Stroom = "83"
+          FileNr = OutputFileNr
+        Else
+          FileNr = 0
+        EndIf
       EndIf
-      WriteCharacter(FileNr, l0)
-      WriteCharacter(FileNr, l1)
-      WriteCharacter(FileNr, l2)
-      WriteData(FileNr, *AFPRecord, RecordLength)
+      If FileNr > 0
+        WriteCharacter(FileNr, l0)
+        WriteCharacter(FileNr, l1)
+        WriteCharacter(FileNr, l2)
+        WriteData(FileNr, *AFPRecord, RecordLength)
+      EndIf
     EndIf
     ;}
     
     If SFID = ENG
+      ;Debug "ENG"
       NamedGroupLevel - 1
     EndIf
     
@@ -290,7 +344,8 @@ VerwerkFileError:
   
 Return
 ;}
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 169
-; Folding = Q-+
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 216
+; FirstLine = 120
+; Folding = w6+
 ; EnableXP
