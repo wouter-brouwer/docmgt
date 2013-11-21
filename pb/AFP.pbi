@@ -27,6 +27,8 @@ BRG.s = "D3A8C6" ; Begin Resource Group
 BSG.s = "D3A8D9" ; Begin Resource Environment Group
 CAT.s = "D3B077" ; Color Attribute Table
 CDD.s = "D3A692" ; Container Data Descriptor
+CPC.s = "D3A787"
+CPI.s = "D38C87"
 CTC.s = "D3A79B" ; Composed Text Control (O)
 EAG.s = "D3A9C9" ; End Active Environment Group
 EBC.s = "D3A9EB" ; End Bar Code Object
@@ -98,8 +100,8 @@ PTD1.s = "D3A69B" ; Presentation Text Descriptor Format-1 (C)
 PTX.s = "D3EE9B" ; Presentation Text Data
 TLE.s = "D3A090" ; Tag Logical Element
 ;}
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 96
-; FirstLine = 54
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 30
+; FirstLine = 26
 ; Folding = -
 ; EnableXP
