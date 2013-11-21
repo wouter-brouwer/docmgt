@@ -1,7 +1,8 @@
-stroom;paginaformaat;orientatie;plex;kleurtype;papiertype;papiersoort;enveloptype;couverteermethde;envelopsoort;bijsluiters;postdistributeur;distributieklasse;sla
+stroom;paginaformaat;orientatie;plex;kleurtype;papiertype;papiersoort;enveloptype;couverteermethode;envelopsoort;bijsluiters;postdistributeur;distributieklasse;sla
 83;A5 ;landscape;simplex;bw;cf;;c5;mps;;geen;PostNL;??;1 dag
 82;A5 ;landscape;simplex;bw;cf;;c5;mps;;geen;PostNL;??;1 dag
 84;A5 ;landscape;simplex;bw;cf;;c5;mps;;geen;PostNL;??;1 dag
 85;A5 ;landscape;simplex;bw;cf;;c5;mps;;geen;PostNL;??;1 dag
 86;A5 ;landscape;simplex;bw;cf;;c5;mps;;geen;PostNL;??;1 dag
-62;;;;;;;;;;;;;
+test;A5 ;;;;;;;;;;;;
+2d;A5 ;;;;;;;;;;;;
