@@ -342,8 +342,8 @@ VerwerkFileError:
   
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 57
+; IDE Options = PureBasic 5.20 LTS (Linux - x64)
+; CursorPosition = 69
 ; FirstLine = 21
 ; Folding = +J+
 ; EnableXP

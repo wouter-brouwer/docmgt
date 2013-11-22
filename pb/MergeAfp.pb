@@ -164,6 +164,16 @@ HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *EDT = AllocateMemory(HexLen(HexString))
 EDTlen = PokeHexString(*EDT, HexString)
 
+HexString = BPT + "00 0000" + HexString(AsciiToEbcdic("INSTLIJN"))
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BPT = AllocateMemory(HexLen(HexString))
+BPTlen = PokeHexString(*BPT, HexString)
+
+HexString = EPT + "00 0000" + HexString(AsciiToEbcdic("INSTLIJN"))
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*EPT = AllocateMemory(HexLen(HexString))
+EPTlen = PokeHexString(*EPT, HexString)
+
 NewList FileNames.s()
 ;}
 
@@ -373,19 +383,34 @@ VerwerkJob:
     Wend
     
     CloseFile(InputFileNr)
-    AddElement(MrdfLines())
+    ;{ Build MRDF record
     MrdfRecord.s = "  "
-    MrdfRecord + JobNr
+    MrdfRecord + RSet(JobNr,8,"0")
     MrdfRecord + RSet(Str(Documents),6,"0")
-    MrdfRecord + RSet(Str(PageNr),5,"0")
+    MrdfRecord + Space(32)
+    MrdfRecord + Space(32)
     MrdfRecord + RSet(Str(Pages),5,"0")
-    MrdfRecord + Inserterstations
-    MrdfRecord + NextChannel
+    MrdfRecord + RSet("",55,"0")
+    MrdfRecord + "0.000"
+    MrdfRecord + InserterStations
+    MrdfRecord + RSet("",10,"0")
+    MrdfRecord + "0"
+    MrdfRecord + QualityCheck"
+    MrdfRecord + "0"
     MrdfRecord + EdgeMarker
+    MrdfRecord + "00000"
+    MrdfRecord + Space(16*40+32)
+    MrdfRecord + "0"
+    MrdfRecord + "0"
+    MrdfRecord + "0"
+    MrdfRecord + "0"
+    MrdfRecord + "0"
     MrdfRecord + QualityCheck
     MrdfRecord + InputFile
     ;Debug MrdfRecord
+    AddElement(MrdfLines())
     MrdfLines() = MrdfRecord
+    ;} 
   
     ;}
   Next
@@ -411,8 +436,7 @@ VerwerkJob:
     CloseFile(MrdfFileNr)
   EndIf
   
-  Done.s = JobDir + ".done"
-  Done = ReplaceString(Done, "/.", ".")
+  Done.s = ReplaceString(JobDir + ".done", "/.", ".")
   
   ; TEST
   ;RenameFile(JobDir, Done)
@@ -430,9 +454,8 @@ DataSection
   EndInstelHoekjeA5:
   
 EndDataSection 
-
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 408
-; FirstLine = 212
-; Folding = E0
+; IDE Options = PureBasic 5.20 LTS (Linux - x64)
+; CursorPosition = 407
+; FirstLine = 166
+; Folding = A0-
 ; EnableXP

@@ -1,1 +1,0 @@
-Doc.Insert.Disposition,character,16,[expr=if(or(Doc.Insert.Status=="Attention",Doc.Insert.Status==""),"",if(Doc.Insert.Status=="Damaged","Reprint",if(Doc.Insert.Status=="OK","OK",if(Doc.Insert.Status=="Pulled","Pull",""))))]
