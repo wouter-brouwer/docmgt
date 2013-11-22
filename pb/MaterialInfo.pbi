@@ -1,4 +1,4 @@
-Procedure.s StreamInfo(StreamCode.s, Keyword.s)
+Procedure.s MaterialInfo(MaterialCode.s, Keyword.s)
   
   ; Deze procedure levert stroom attributen
   
@@ -9,7 +9,7 @@ Procedure.s StreamInfo(StreamCode.s, Keyword.s)
   Static Separator.s = ";"
 
   If Date() > LastRun + 300 ; elke 5 minuten    
-    FileName.s = ConfigDir + "streaminfo.csv"
+    FileName.s = ConfigDir + "materialinfo.csv"
     FileNr = ReadFile(#PB_Any, FileName)
     If FileNr > 0
       Keywords = ""
@@ -41,23 +41,23 @@ Procedure.s StreamInfo(StreamCode.s, Keyword.s)
     EndIf
   Next Index
   If Index > KeywordCount
-    LogMsg("Error: Unable to find Keyword " + Keyword)
+    LogMsg("Error: Unable to find MatrialInfo Keyword " + Keyword)
     ProcedureReturn "error"
   EndIf  
   
   Found = 0
   ForEach Lines()
-    If Trim(LCase(StringField(Lines(), 1, Separator))) = LCase(StreamCode)
+    If Trim(LCase(StringField(Lines(), 1, Separator))) = LCase(MaterialCode)
       ProcedureReturn Trim(StringField(Lines(), Index, Separator))
     EndIf
   Next
   
-  LogMsg("Error: Unable to find StreamCode " + StreamCode)
+  LogMsg("Error: Unable to find MaterialCode " + MaterialCode)
   ProcedureReturn "error"
 
 EndProcedure
 
 ; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 54
+; CursorPosition = 24
 ; Folding = -
 ; EnableXP

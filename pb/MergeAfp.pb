@@ -8,6 +8,9 @@
 
 ;}
 
+
+NewList MrdfLines.s()
+
 IncludeFile "Common.pbi"
 
 IncludeFile "AFP.pbi"
@@ -15,6 +18,8 @@ IncludeFile "AFP.pbi"
 Global ConfigDir.s
 
 IncludeFile "StreamInfo.pbi"
+
+IncludeFile "RunControl.pbi"
 
 ;{ Maak Barcode records
 
@@ -143,9 +148,9 @@ EndIf
 ConfigDir.s = CheckDirectory(ReadPreferenceString("ConfigDir",""))
 TmpDir.s = CheckDirectory(ReadPreferenceString("TmpDir",""))
 LogDir = CheckDirectory(ReadPreferenceString("LogsDir",""))
-LockDir.s = CheckDirectory(ReadPreferenceString("LocksDir",""))
 JobsDir.s = CheckDirectory(ReadPreferenceString("JobsDir",""))
 OutputDir.s = CheckDirectory(ReadPreferenceString("OutputAfpDir",""))
+OutputMrdfDir.s = CheckDirectory(ReadPreferenceString("OutputMrdfDir",""))
 ResourcesDir.s = CheckDirectory(ReadPreferenceString("ResourcesDir",""))
 ClosePreferences()
 
@@ -162,24 +167,44 @@ EDTlen = PokeHexString(*EDT, HexString)
 NewList FileNames.s()
 ;}
 
-;Repeat
-;{ Loop door de jobs
-If ExamineDirectory(0, JobsDir, "*.*")
-  While NextDirectoryEntry(0)
-    If DirectoryEntryType(0) = #PB_DirectoryEntry_Directory
-      JobName.s = DirectoryEntryName(0)
-      If Left(JobName, 1) <> "." And Right(JobName, 5) <> ".busy" And Right(JobName, 5) <> ".done"
-        JobDir.s = JobsDir + JobName + "/"
-        Gosub VerwerkJob
-      EndIf
+;{ Main loop
+Quit = 0
+Repeat
+  
+  Quit = Bool(FileSize(#StopFile) = 0)
+
+  If FileSize(#PauseFile) < 0 And Not Quit
+
+    ;{ Loop door de jobs
+    If ExamineDirectory(0, JobsDir, "*.*")
+      While NextDirectoryEntry(0)
+        If DirectoryEntryType(0) = #PB_DirectoryEntry_Directory
+          JobName.s = DirectoryEntryName(0)
+          If Left(JobName, 1) <> "." And Right(JobName, 5) <> ".busy" And Right(JobName, 5) <> ".done"
+            JobDir.s = JobsDir + JobName + "/"
+            Gosub VerwerkJob
+          EndIf
+        EndIf
+      Wend
+      FinishDirectory(0)
     EndIf
-  Wend
-  FinishDirectory(0)
-EndIf
+    ;}
+  
+  EndIf
+  
+  LogMsg("")
+  Delay(1000)
+  
+  ; TEST
+  Quit = 1
+  
+Until Quit
 ;}
-Delay(1000)
-;ForEver
+
+;{ Afsluiting
+LockFile("close")
 End
+;}
 
 ;{ VerwerkJob:
 VerwerkJob:
@@ -187,6 +212,7 @@ VerwerkJob:
   LogMsg("Processing job " + JobName)
 
   Stroom.s = StringField(JobName, 1, "_")
+  JobNr.s = StringField(JobName, 2, "_")
   
   ResourcesSubDir.s = CheckDirectory(ResourcesDir + Stroom)
 
@@ -204,6 +230,8 @@ VerwerkJob:
   ;}
   
   SortList(FileNames(), #PB_Sort_Ascending)
+  
+  ClearList(MrdfLines())
   
   ForEach FileNames()
     InputFile.s = FileNames()    
@@ -246,6 +274,11 @@ VerwerkJob:
     e = FindString(InputFile, ".")
     Pages = Val(Mid(InputFile, p + 2, e - p))
     
+    InserterStations.s = "000000"
+    QualityCheck.s = "0"
+    EdgeMarker.s = "0"
+    NextChannel.s = "0"
+    
     While Not Eof(InputFileNr)
       
       
@@ -264,11 +297,29 @@ VerwerkJob:
       SFID.s = HexString(PeekS(*AFPRecord,3))
 
       Select SFID
+          
+        Case TLE
+          ln.c = PeekC(*AFPRecord + 6)
+          TagName.s = EbcdicToAscii(PeekS(*AFPRecord + 6 + 4, ln - 4))
+          lv.c = PeekC(*AFPRecord + 6 + ln)
+          TagValue.s = EbcdicToAscii(PeekS(*AFPRecord + 6 + 4 + ln, lv - 4))
+          Select TagName
+            Case "ADF-IP-INSERTERSTATIONS"
+              InserterStations = TagValue
+            Case "ADF-IP-EDGEMARKER"
+              EdgeMarker = TagValue
+            Case "ADF-IP-QUALITYCHECK"
+              QualityCheck = TagValue
+            Case "ADF-IP-NEXTCHANNEL"
+              NextChannel = TagValue
+          EndSelect
+          
         Case BPG
           PageNr + 1
+          
         Case EPG
           ; <<< TEST
-          PageFormat.s = UCase(StreamInfo(Stroom, "PaginaFormaat"))
+          PageSize.s = UCase(StreamInfo(Stroom, "PageSize"))
           If 1 = 1
             ; 2D Matrix
             WriteData(OutputFileNr, *BBC, BBClen)          
@@ -279,16 +330,16 @@ VerwerkJob:
             WriteData(OutputFileNr, *BDD, BDDlen)
             WriteData(OutputFileNr, *EOG, EOGlen)
             
-            Barcode.s = StringField(JobName,2,"_")
+            Barcode.s = JobNr
             Barcode + RSet(Str(Documents),6,"0")
             Barcode + RSet(Str(PageNr),5,"0")
             Barcode + RSet(Str(Pages),5,"0")
-            Barcode + "000000" ; Inserterstations
-            Barcode + "0" ; Quality Check
-            Barcode + "0" ; Edge Mark
-            Barcode + "0" ; Next Channel 
+            Barcode + Inserterstations
+            Barcode + NextChannel
+            Barcode + EdgeMarker
+            Barcode + QualityCheck
             Barcode = AsciiToEbcdic(Barcode)
-            If PageFormat = "A4"
+            If PageSize = "A4"
               Hexstring.s = BDA_HeaderA4 + HexString(Barcode)
             Else
               Hexstring.s = BDA_HeaderA5 + HexString(Barcode)
@@ -303,7 +354,7 @@ VerwerkJob:
           
           
           ; of op basis van de page descriptor
-          If UCase(StreamInfo(Stroom, "PaginaFormaat")) = "A5"
+          If PageSize = "A5L"
             ; PageHeight - 16
             WriteData(OutputFileNr, *InstelHoekjeA5, InstelHoekjeA5Len)
           EndIf
@@ -311,6 +362,7 @@ VerwerkJob:
  ;         If UCase(StreamInfo(Stroom, "PaginaFormaat")) = "A4"
  ;           WriteData(OutputFileNr, *InstelHoekjeA4, InstelHoekjeA5Len)
  ;         EndIf
+  
     
       EndSelect
 
@@ -321,6 +373,19 @@ VerwerkJob:
     Wend
     
     CloseFile(InputFileNr)
+    AddElement(MrdfLines())
+    MrdfRecord.s = "  "
+    MrdfRecord + JobNr
+    MrdfRecord + RSet(Str(Documents),6,"0")
+    MrdfRecord + RSet(Str(PageNr),5,"0")
+    MrdfRecord + RSet(Str(Pages),5,"0")
+    MrdfRecord + Inserterstations
+    MrdfRecord + NextChannel
+    MrdfRecord + EdgeMarker
+    MrdfRecord + QualityCheck
+    MrdfRecord + InputFile
+    ;Debug MrdfRecord
+    MrdfLines() = MrdfRecord
   
     ;}
   Next
@@ -335,6 +400,15 @@ VerwerkJob:
     CopyFile(OutputDir + OutputFile.s, OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
     LogMsg("Info: " + JobName + ".afp created with " + Str(Documents) + " documents")
     ;}
+    MrdfFile.s = OutputMrdfDir + JobNr + ".inp"
+    MrdfFilenr = CreateFile(#PB_Any, MrdfFile)
+    If Not MrdfFilenr
+      LogMsg("Critical: Unable to create " + MrdfFile)
+    EndIf
+    ForEach MrdfLines()
+      WriteStringN(MrdfFileNr, MrdfLines())
+    Next
+    CloseFile(MrdfFileNr)
   EndIf
   
   Done.s = JobDir + ".done"
@@ -358,7 +432,7 @@ DataSection
 EndDataSection 
 
 ; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 290
-; FirstLine = 235
-; Folding = e-
+; CursorPosition = 408
+; FirstLine = 212
+; Folding = E0
 ; EnableXP

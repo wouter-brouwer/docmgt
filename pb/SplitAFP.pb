@@ -23,6 +23,8 @@ Global ConfigDir.s
 
 IncludeFile "StreamInfo.pbi"
 
+IncludeFile "RunControl.pbi"
+
 ;{ Initialisatie
 
 NewList OutputFiles.s()
@@ -34,17 +36,11 @@ EndIf
 ConfigDir.s = CheckDirectory(ReadPreferenceString("ConfigDir",""))
 TmpDir.s = CheckDirectory(ReadPreferenceString("TmpDir",""))
 LogDir = CheckDirectory(ReadPreferenceString("LogsDir",""))
-LockDir.s = CheckDirectory(ReadPreferenceString("LocksDir",""))
 InputDir.s = CheckDirectory(ReadPreferenceString("InputAfpDir",""))
 TodoDir.s = CheckDirectory(ReadPreferenceString("ToDoDir",""))
 ResourcesDir.s = CheckDirectory(ReadPreferenceString("ResourcesDir",""))
 ClosePreferences()
 
-LockFile.s = LockDir + #Prog + ".lock"
-LockFileNr = CreateFile(#PB_Any, LockFile)
-If LockFileNr = 0 
-  LogMsg("Critical: Unable to create " + LockFile + " Program already running?")
-EndIf
 
 ; <<< T.b.v. Controle-D fout correctie
 ; ENG End Named Group
@@ -58,32 +54,37 @@ LogMsg(#Prog + " started")
 ;}
 
 ;{ Main loop
-; TEST
-;While FileSize(#Prog + ".stop") = -1 ; Zolang er geen SplitAFP.stop bestand is
-
-  ; Verwerk alle AFP bestanden uit de input directory
-  If ExamineDirectory(0, InputDir, "*.afp")
-    While NextDirectoryEntry(0)
-      If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-        InputFile.s = DirectoryEntryName(0)
-        If Right(InputFile, 5) <> ".done"
-          Gosub VerwerkFile
-        EndIf
-      EndIf
-    Wend
-    FinishDirectory(0)
-  EndIf
+Quit = 0
+Repeat
   
+  Quit = Bool(FileSize(#StopFile) = 0)
+
+  If FileSize(#PauseFile) < 0 And Not Quit
+    ; Verwerk alle AFP bestanden uit de input directory
+    If ExamineDirectory(0, InputDir, "*.afp")
+      While NextDirectoryEntry(0)
+        If DirectoryEntryType(0) = #PB_DirectoryEntry_File
+          InputFile.s = DirectoryEntryName(0)
+          If Right(InputFile, 5) <> ".done"
+            Gosub VerwerkFile
+          EndIf
+        EndIf
+      Wend
+      FinishDirectory(0)
+    EndIf
+  EndIf
+
   LogMsg("") ; Om logfile te kunnen closen bij geen activiteit
   Delay(100) ; CPU besparing
   
-; TEST
-;Wend
+  ; TEST
+  Quit = 1
+  
+Until Quit
 ;}
   
 ;{ Afsluiting
-CloseFile(LockFileNr)
-DeleteFile(LockFile)
+LockFile("close")
 End
 ;}
 
@@ -102,7 +103,7 @@ VerwerkFile:
     Goto VerwerkFileError:
   EndIf
   Stroom.s = Left(InputFile, p - 1)
-  If LCase(StreamInfo(Stroom,"Stroom")) <> LCase(Stroom)
+  If LCase(StreamInfo(Stroom,"Code")) <> LCase(Stroom)
     Error.s = "Onbekende stroom " + Stroom
     Goto VerwerkFileError:
   EndIf
@@ -342,7 +343,7 @@ VerwerkFileError:
 Return
 ;}
 ; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 216
-; FirstLine = 161
-; Folding = yJ+
+; CursorPosition = 57
+; FirstLine = 21
+; Folding = +J+
 ; EnableXP

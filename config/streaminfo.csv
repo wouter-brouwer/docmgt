@@ -1,0 +1,16 @@
+Code;PageSize;Plex;Color;PaperType;PaperCode;Envelop;Inserting;Insert1;Insert2;Insert3;Insert4;Insert5;Insert6;Mailer;MailClass;SLA
+#;;;;;;;;;;;;;;;;
+83;A5L;simplex;bw;cf;123456;34567;mps;abc;;;;;;PostNL;20;24h
+82;A5L;simplex;bw;cf;;c5;mps;;;;;;;PostNL;50;24h
+84;A5L;simplex;bw;cf;;c5;mps;;;;;;;PostNL;50;24h
+85;A5L;simplex;bw;cf;;c5;mps;;;;;;;PostNL;50;48h
+86;A5L;simplex;bw;cf;;c5;mps;;;;;;;PostNL;50;24h
+test;A5L;;;;;;manual;;;;;;;;;
+2d;A5L;;;;;;mse;;;;;;;;;
+#;;;;;;;;;;;;;;;;
+#;# voorbeeldwaarden;;;;;;;;;;;;;;;
+#;A4;simplex;bw;cf;;;;;;;;;;PostNL;20;
+#;A4L;dumplex;color;plano;;;mps;;;;;;;SANND;50;
+#;A5;;;;;;mse;;;;;;;;europe;
+#;A5L;;;;;;manual;;;;;;;;world;
+;;;;;;;booklet;;;;;;;;;
