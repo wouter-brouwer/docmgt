@@ -1,0 +1,32 @@
+######################################################################
+# File: PB.icf.inputFile.header.dsc
+#
+# In dit bestand wordt het voorlooprecord voor de
+# Mail Run Data File (MRDF) gedefinieerd.
+#
+# Versie    Datum    Auteur         Omschrijving
+#  0.1    11-07-2013 Wouter Brouwer Eerste versie
+#
+######################################################################
+Space(2)
+JobID,character,8,[expr=Job.Inserter.JobID]
+Space(203)
+Zero(5)
+Space(19)
+Zero(5)
+DataSetType,integer,1,[expr=2]
+PlannedMailpieceCount,integer,6,[expr=Job.Doc.DocumentCount]
+PlannedSheetCount,integer,10,[expr=Job.TotalSheets]
+Space(112)
+InsertFeeder01Mode,integer,1,[expr=2]
+InsertFeeder02Mode,integer,1,[expr=2]
+InsertFeeder03Mode,integer,1,[expr=2]
+InsertFeeder04Mode,integer,1,[expr=2]
+InsertFeeder05Mode,integer,1,[expr=2]
+InsertFeeder06Mode,integer,1,[expr=2]
+String("1", 10)
+Space(328)
+Zero(16*6)
+JobName,character,60,[expr=Job.Name]
+Space(138)
+

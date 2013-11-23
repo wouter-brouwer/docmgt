@@ -1,0 +1,27 @@
+
+# In dit bestand wordt de indeling van de data records voor de
+# MRDF gedefinieerd.
+#
+
+Space(2)
+JobID,character,8,[expr=Job.Inserter.JobID]
+PieceID,integer,6,[expr=Doc.Insert.RecipientName]
+Space(64)
+TotalSheetsInputFdr1,integer,5,[expr=Doc.OriginalSheets]
+Zero(55)
+InputWeight,character,5,[expr="0.000"]
+InsertFeeder01_06,integer,6,[expr=if(defined(Doc.Insert.BinTriggers),Doc.Insert.BinTriggers,0)]
+Zero(11)
+QualityAudit,integer,1,[expr=SUBSTR(Doc.Insert.DivertBin,2,1)]
+Zero(1)
+EdgeMarker,integer,1,[expr=SUBSTR(Doc.Insert.DivertBin,1,1)]
+Zero(6)
+Space(440)
+Space(32)
+Space(200)
+ReprintIndex,character,30,[expr=fmt("%i",Doc.ID)]
+Zero(12)
+Space(78)
+Zero(4)
+Space(122)
+

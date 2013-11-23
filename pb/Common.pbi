@@ -99,6 +99,43 @@ Procedure DebugHexMem(*Pointer, Length)
   ;CallDebugger
 EndProcedure
 
+Procedure.s String(String.s, Length)
+  ProcedureReturn RSet("", Length, String)
+EndProcedure
+
+Procedure.s Zero(Length)
+  ProcedureReturn String("0", Length)
+EndProcedure
+
+Procedure PokeUU(*Buffer, Value.u)
+  ; Zet een 2bytes unsigned waarde in het geheugen met de high order byte eerst
+  l1.c = Value / 256
+  l2.c = Value % 256
+  PokeC(*Buffer, l1)
+  PokeC(*Buffer + 1, l2)
+EndProcedure
+
+Procedure.u PeekUU(*Buffer)
+  ; Haalt een 2 byte unsigned waarde uit het geheugen met de high order byte eerst 
+  l1.c = PeekC(*Buffer)
+  l2.c = PeekC(*Buffer + 1)
+  ProcedureReturn l1 * 256 + l2
+EndProcedure
+
+Procedure.u ReadUU(FileNr)
+  l1.c = ReadCharacter(FileNr)
+  l2.c = ReadCharacter(FileNr)
+  ProcedureReturn l1 * 256 + l2
+EndProcedure
+
+Procedure WriteUU(FileNr, Value.u)
+  l1.c = Value / 256
+  l2.c = Value % 256
+  WriteCharacter(Filenr, l1)
+  WriteCharacter(FileNr, l2)
+
+EndProcedure
+
 Procedure.s EbcdicToAscii(String.s)
   code.s = Space(75)
   code + ".<(+|&" + Space(9)
@@ -159,7 +196,7 @@ Procedure.s CheckDirectory(Dir.s)
     ProcedureReturn Dir + "/"
   EndIf
 EndProcedure
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 156
-; Folding = A5
+; IDE Options = PureBasic 5.20 LTS (Linux - x64)
+; CursorPosition = 106
+; Folding = AAw
 ; EnableXP

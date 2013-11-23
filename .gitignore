@@ -4,4 +4,5 @@
 *.tmp
 *.lock
 *.stop
-config/jobnr.txt
+config/JobNr.txt
+pb/openloop.ini
