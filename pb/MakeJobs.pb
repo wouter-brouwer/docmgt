@@ -579,6 +579,9 @@ Repeat
       
         ;}
         
+        ; TEST
+        Quit = 1
+        
       Wend
       CloseFile(1) ; Regels
       ;}
@@ -646,9 +649,9 @@ VerwerkFile:
 
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 594
-; FirstLine = 38
+; IDE Options = PureBasic 5.20 LTS (Linux - x64)
+; CursorPosition = 583
+; FirstLine = 49
 ; Folding = gFA5
 ; EnableUnicode
 ; EnableXP

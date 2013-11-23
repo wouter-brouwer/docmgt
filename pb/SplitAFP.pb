@@ -162,17 +162,24 @@ VerwerkFile:
       Error = InputDir + InputFile + " contains invalid AFP"
       Break
     EndIf
-    l1.c = ReadCharacter(InputFileNr)
-    l2.c = ReadCharacter(InputFileNr)
+    ;l1.c = ReadCharacter(InputFileNr)
+    ;l2.c = ReadCharacter(InputFileNr)
+    ;RecordLength = 256 * l1 + l2 - 2
+    RecordLength.u = ReadUU(InputFileNr) - 2
     
-    RecordLength = l1 * 256 + l2 - 2
     ReadData(InputFileNr, *AFPRecord, RecordLength)
     RecordNr + 1
     
     ; Structured Field Identifier
     SFID.s = HexString(PeekS(*AFPRecord,3))
-    Debug SFID
+    
     Select SFID
+        
+        
+        
+      Case BR
+        ResName.s = EbcdicToAscii(PeekS(*AFPRecord + 6, 8)) + ".res"
+        ResFileNr = CreateFile(#PB_Any, TmpSubDir + ResName)
         
       Case NOP
         ; <<< T.b.v. Control-D fout correctie
@@ -182,14 +189,14 @@ VerwerkFile:
         ;
         
       Case BDT
-        Debug "BDT"
+        ;Debug "BDT"
         Header = 0
         CloseFile(HeaderFileNr)
         HeaderFileNr = 0
         Skip = 1
         
       Case BPG
-        Debug "BPG"
+        ;Debug "BPG"
         Pages + 1
         
       Case EPG
@@ -217,14 +224,24 @@ VerwerkFile:
           Error = "Bestand bevat geneste Named Groups"
           Break
         EndIf
-        Documents + 1
+
         Gosub CloseOutputFile
+        
         ;{ Elke minuut wat voortgang tonen
         If Date() > LastRun + 60
           LastRun = Date()
           LogMsg("Info: " + Str(Documents) + " Documents")
         EndIf
         ;}
+        
+        ; TEST
+        If Documents >= 3000
+          FileSeek(InputFileNr, Lof(InputFileNr))
+          Continue
+        EndIf
+        
+        Documents + 1
+        
         ;{ Output bestand openen
         OutputFile.s = OutputBase + "_0" + RSet(Str(Documents), 6, "0") + ".afp"
         OutputFileNr = CreateFile(#PB_Any, TmpSubDir + OutputFile)
@@ -249,9 +266,13 @@ VerwerkFile:
       EndIf
       If FileNr > 0
         WriteCharacter(FileNr, l0)
-        WriteCharacter(FileNr, l1)
-        WriteCharacter(FileNr, l2)
+        WriteUU(FileNr, RecordLength + 2)
         WriteData(FileNr, *AFPRecord, RecordLength)
+        If ResFileNr
+          WriteCharacter(ResFileNr, l0)
+          WriteUU(ResFileNr, RecordLength + 2)
+          WriteData(ResFileNr, *AFPRecord, RecordLength)
+        EndIf
       EndIf
     EndIf
     ;}
@@ -261,6 +282,41 @@ VerwerkFile:
       NamedGroupLevel - 1
     EndIf
     
+    
+    If SFID = ER
+      CloseFile(ResFileNr)
+      ResFileNr = 0
+      
+      ; Vergelijk deze met die in de resource dir
+      ResOldLen = FileSize(ResourcesSubDir + ResName)
+      ResNewLen = FileSize(TmpSubDir + ResName) 
+      If ResOldLen > 0 And ResNewLen <> ResOldLen
+        LogMsg("Error: Resource " + ResName + " seems to be different than the stored version in " + ResourcesSubDir)
+      EndIf
+      If ResOldLen > 0
+        *ResOld = AllocateMemory(ResOldLen)
+        ReadFile(0, ResourcesSubDir + ResName)
+        ReadData(0, *ResOld, ResOldLen)
+        CloseFile(0)
+        *ResNew = AllocateMemory(ResNewLen)
+        ReadFile(0, TmpSubDir + ResName)
+        ReadData(0, *ResNew, ResNewLen)
+        CloseFile(0)
+        If Not CompareMemory(*ResOld, *ResNew, ResNewLen)
+          LogMsg("Error: Resource " + ResName + " seems to be different than the stored version in " + ResourcesSubDir)
+        EndIf
+        DeleteFile(ResourcesSubDir + ResName)
+      EndIf
+      If Not RenameFile(TmpSubDir + ResName, ResourcesSubDir + ResName)
+        LogMsg("Critical: Unable to move " + ResName + " from " + TmpSubDir + " to " + ResourcesSubDir)
+      EndIf
+      
+     
+      ; indien ongelijk dan error
+      ; anders delete hem in de resource dir
+      ; en verlaats deze naar de resource dir
+    EndIf
+ 
     PreviousSFID.s = SFID
   
   Wend
@@ -290,6 +346,9 @@ VerwerkFile:
         LogMsg("Critical: Unable to move " + TmpSubDir + OutputFiles() + " to " + TodoSubDir)
     EndIf
   Next
+  
+  ; Fiets door alle resources uit de tmp directory
+  
   
   DeleteDirectory(TmpSubDir, "")
   ;} 
@@ -343,7 +402,7 @@ VerwerkFileError:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 69
-; FirstLine = 21
-; Folding = +J+
+; CursorPosition = 237
+; FirstLine = 78
+; Folding = Q-+
 ; EnableXP

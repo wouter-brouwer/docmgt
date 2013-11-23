@@ -138,8 +138,8 @@ EBClen = PokeHexString(*EBC, HexString)
 ;InstelHoekjeA4Len = ?EndInstelHoekjeA4 - ?InstelHoekjeA4
 ;*InstelHoekjeA4 = ?InstelHoekjeA4
 
-InstelHoekjeA5Len = ?EndInstelHoekjeA5 - ?InstelHoekjeA5
-*InstelHoekjeA5 = ?InstelHoekjeA5
+;InstelHoekjeA5Len = ?EndInstelHoekjeA5 - ?InstelHoekjeA5
+;*InstelHoekjeA5 = ?InstelHoekjeA5
 
 If Not OpenPreferences("openloop.ini")
   LogMsg("Critical: Unable to open openloop.ini")
@@ -164,15 +164,25 @@ HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *EDT = AllocateMemory(HexLen(HexString))
 EDTlen = PokeHexString(*EDT, HexString)
 
-HexString = BPT + "00 0000" + HexString(AsciiToEbcdic("INSTLIJN"))
+HexString = BPT + "00 0000 FFFF 0000 0000 0000"
 HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *BPT = AllocateMemory(HexLen(HexString))
 BPTlen = PokeHexString(*BPT, HexString)
 
-HexString = EPT + "00 0000" + HexString(AsciiToEbcdic("INSTLIJN"))
+HexString = EPT + "00 0000 FFFF 0000 0000 0000"
 HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *EPT = AllocateMemory(HexLen(HexString))
 EPTlen = PokeHexString(*EPT, HexString)
+
+HexString = BRG + "00 0000"
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BRG = AllocateMemory(HexLen(HexString))
+BRGlen = PokeHexString(*BRG, HexString)
+
+HexString = ERG + "00 0000"
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*ERG = AllocateMemory(HexLen(HexString))
+ERGlen = PokeHexString(*ERG, HexString)
 
 NewList FileNames.s()
 ;}
@@ -267,9 +277,27 @@ VerwerkJob:
         LogMsg("Critical: Unable to create " + OutputDir + OutputFile)
       EndIf
       Documents = 0
+;       
+;       ; Write Header
+;       WriteData(OutputFileNr, *HeaderBuffer, HeaderLength)
       
-      ; Write Header
-      WriteData(OutputFileNr, *HeaderBuffer, HeaderLength)
+       WriteData(OutputFileNr, *BRG, BRGlen)          
+       If ExamineDirectory(1, ResourcesSubDir, "*.res")
+         While NextDirectoryEntry(1)
+           If DirectoryEntryType(1) = #PB_DirectoryEntry_File
+             ResName.s = DirectoryEntryName(1)
+             ReadFile(0, ResourcesSubDir + ResName)
+             ResourceBufferLen = Lof(0)
+             *ResourceBuffer = AllocateMemory(ResourceBufferLen)
+             ReadData(0, *ResourceBuffer, ResourceBufferLen)
+             CloseFile(0)
+             WriteData(OutputFileNr, *ResourceBuffer, ResourceBufferLen)
+           EndIf
+         Wend
+         FinishDirectory(1)
+       EndIf
+       WriteData(OutputFileNr, *ERG, ERGlen)
+     
       WriteData(OutputFileNr, *BDT, BDTlen)
     
       ;}
@@ -296,9 +324,10 @@ VerwerkJob:
       If l0 <> 90
         LogMsg("Critical: " + JobDir + InputFile + " contains invalid AFP")
       EndIf
-      l1.c = ReadCharacter(InputFileNr)
-      l2.c = ReadCharacter(InputFileNr)
-      RecordLength = l1 * 256 + l2 - 2
+      ;l1.c = ReadCharacter(InputFileNr)
+      ;l2.c = ReadCharacter(InputFileNr)
+      ;RecordLength = l1 * 256 + l2 - 2
+      RecordLength.u = ReadUU(InputFileNr) - 2
       
       ReadData(InputFileNr, *AFPRecord, RecordLength)
       RecordNr + 1
@@ -307,6 +336,20 @@ VerwerkJob:
       SFID.s = HexString(PeekS(*AFPRecord,3))
 
       Select SFID
+          
+        Case PGD ; Page Descriptor
+          ;D3 A6 AF 00 00 00
+          ;00 X Base 10 inch
+          ;00 Y Base 10 inch
+          ;00 00 pixels per base X
+          pp10ix.u = PeekUU(*AFPRecord + 8)
+          ;00 00 pixels per base y
+          pp10iy.u = PeekUU(*AFPRecord + 10)
+          ;00 00 PageWidth
+          PageWith.u = PeekUU(*AFPRecord + 13)
+          ;00 00 PageHeight
+          PageHeight.u = PeekUU(*AFPRecord + 16)
+          ;CallDebugger
           
         Case TLE
           ln.c = PeekC(*AFPRecord + 6)
@@ -331,7 +374,7 @@ VerwerkJob:
           ; <<< TEST
           PageSize.s = UCase(StreamInfo(Stroom, "PageSize"))
           If 1 = 1
-            ; 2D Matrix
+            ;{ Plaats 2D Matrix
             WriteData(OutputFileNr, *BBC, BBClen)          
             WriteData(OutputFileNr, *BOG, BOGlen)
             WriteData(OutputFileNr, *OBD, OBDlen)
@@ -360,25 +403,49 @@ VerwerkJob:
         
             WriteData(OutputFileNr, *BDA, BDAlen)
             WriteData(OutputFileNr, *EBC, EBClen)
+            ;}
           EndIf
           
-          
-          ; of op basis van de page descriptor
-          If PageSize = "A5L"
-            ; PageHeight - 16
-            WriteData(OutputFileNr, *InstelHoekjeA5, InstelHoekjeA5Len)
+          If 1 = 1
+            ;{ Scrijf het instelhoekje
+            WriteData(OutputFileNr, *BPT, BPTlen)
+            
+            ; PTX Presentation Text
+            HexString = PTX + "00 0000" ; SFID + Flags + Reserved
+            HexString + "2B D3"
+            HexString + "05 75 00 08 01" ; STC Black
+            HexString + "06 F7 00 00 2D 00" ; STO 90
+            HexString + "05 75 00 08 01 " ; STC Black
+            HexString + "04 C7 00 00" ; AMI X 0
+            HexString + "04 D3"  + RSet(Hex(PageHeight - 600), 4, "0")  ; AMB Y 7752 x'1E48' pageheight - 600
+            ;Debug RSet(Hex(PageHeight - 600), 4, "0")
+            HexString + "07 E7" ; DBR Line Down
+            HexString + "02 4E" ; Length 590
+            HexString + "00 14" ; Width 20
+            HexString + "00 "
+            HexString + "04 C7 00 14" ; AMI X 20
+            HexString + "04 D3" + RSet(Hex(PageHeight - 16), 4, "0") ; AMB Y 8336 x'2090' pageheight - 16
+            ;Debug RSet(Hex(PageHeight - 16), 4, "0")
+            HexString + "07 E5" ; DIR Line Right
+            HexString + "02 4E" ; Length 590
+            HexString + "00 14" ; Width 20
+            HexString + "00 "
+            HexString + "02 F8" ; ???
+            HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+            *PTX = AllocateMemory(HexLen(HexString))
+            PTXlen = PokeHexString(*PTX, HexString)
+            WriteData(OutputFileNr, *PTX, PTXlen)
+
+            WriteData(OutputFileNr, *EPT, EPTlen)
+;           Else 
+;             WriteData(OutputFileNr, *InstelHoekjeA5, InstelHoekjeA5Len)
+            ;}
           EndIf
-          
- ;         If UCase(StreamInfo(Stroom, "PaginaFormaat")) = "A4"
- ;           WriteData(OutputFileNr, *InstelHoekjeA4, InstelHoekjeA5Len)
- ;         EndIf
-  
-    
+           
       EndSelect
 
       WriteCharacter(OutputFileNr, l0)
-      WriteCharacter(OutputFileNr, l1)
-      WriteCharacter(OutputFileNr, l2)
+      WriteUU(OutputFileNr, RecordLength + 2)
       WriteData(OutputFileNr, *AFPRecord, RecordLength)
     Wend
     
@@ -395,7 +462,7 @@ VerwerkJob:
     MrdfRecord + InserterStations
     MrdfRecord + RSet("",10,"0")
     MrdfRecord + "0"
-    MrdfRecord + QualityCheck"
+    MrdfRecord + QualityCheck
     MrdfRecord + "0"
     MrdfRecord + EdgeMarker
     MrdfRecord + "00000"
@@ -421,8 +488,9 @@ VerwerkJob:
     CloseFile(OutputFileNr)
     OutputFileNr = 0
     ; << TEST
-    ;RenameFile(OutputDir + OutputFile.s, OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
-    CopyFile(OutputDir + OutputFile.s, OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
+    DeleteFile(OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
+    RenameFile(OutputDir + OutputFile.s, OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
+    
     LogMsg("Info: " + JobName + ".afp created with " + Str(Documents) + " documents")
     ;}
     MrdfFile.s = OutputMrdfDir + JobNr + ".inp"
@@ -443,19 +511,19 @@ VerwerkJob:
 Return
 ;}
 
-DataSection
-  
-  ;InstelHoekjeA4:
-  ;  IncludeBinary "instelhoekje.A4.afp"
-  ;EndInstelHoekjeA4:
-    
-  InstelHoekjeA5:
-    IncludeBinary "instelhoekje.A5.afp"
-  EndInstelHoekjeA5:
-  
-EndDataSection 
+; DataSection
+;   
+;   ;InstelHoekjeA4:
+;   ;  IncludeBinary "instelhoekje.A4.afp"
+;   ;EndInstelHoekjeA4:
+;     
+;   InstelHoekjeA5:
+;     IncludeBinary "instelhoekje.A5.afp"
+;   EndInstelHoekjeA5:
+;   
+; EndDataSection 
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 407
-; FirstLine = 166
-; Folding = A0-
+; CursorPosition = 141
+; FirstLine = 112
+; Folding = eN9
 ; EnableXP

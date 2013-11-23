@@ -4,4 +4,4 @@
 *.tmp
 *.lock
 *.stop
-config/jobnr.txt
+config/JobNr.txt
