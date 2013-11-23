@@ -233,7 +233,7 @@ VerwerkJob:
 
   Stroom.s = StringField(JobName, 1, "_")
   JobNr.s = StringField(JobName, 2, "_")
-  
+  Dim Stations(6) 
   ResourcesSubDir.s = CheckDirectory(ResourcesDir + Stroom)
 
   ;{ Zet de filenamen in een list om ze gesorteerd te kunnen verwerken
@@ -451,29 +451,30 @@ VerwerkJob:
     
     CloseFile(InputFileNr)
     ;{ Build MRDF record
-    MrdfRecord.s = "  "
+    MrdfRecord.s = Space(2)
     MrdfRecord + RSet(JobNr,8,"0")
     MrdfRecord + RSet(Str(Documents),6,"0")
-    MrdfRecord + Space(32)
-    MrdfRecord + Space(32)
+    MrdfRecord + Space(64)
     MrdfRecord + RSet(Str(Pages),5,"0")
-    MrdfRecord + RSet("",55,"0")
+    MrdfRecord + Zero(55)
     MrdfRecord + "0.000"
     MrdfRecord + InserterStations
-    MrdfRecord + RSet("",10,"0")
-    MrdfRecord + "0"
+    For i = 1 To 6
+      If Mid(InserterStations, i, 1) = "1"
+        Stations(i) + 1
+      EndIf
+    Next i
+    MrdfRecord + Zero(11)
     MrdfRecord + QualityCheck
-    MrdfRecord + "0"
+    MrdfRecord + Zero(1)
     MrdfRecord + EdgeMarker
-    MrdfRecord + "00000"
-    MrdfRecord + Space(16*40+32)
-    MrdfRecord + "0"
-    MrdfRecord + "0"
-    MrdfRecord + "0"
-    MrdfRecord + "0"
-    MrdfRecord + "0"
-    MrdfRecord + QualityCheck
-    MrdfRecord + InputFile
+    MrdfRecord + Zero(6)
+    MrdfRecord + Space(672)
+    MrdfRecord + LSet(StringField(InputFile, 1, "_P"), 30)
+    MrdfRecord + Zero(12)
+    MrdfRecord + Space(78)
+    MrdfRecord + Zero(4)
+    MrdfRecord + Space(122)
     ;Debug MrdfRecord
     AddElement(MrdfLines())
     MrdfLines() = MrdfRecord
@@ -498,6 +499,31 @@ VerwerkJob:
     If Not MrdfFilenr
       LogMsg("Critical: Unable to create " + MrdfFile)
     EndIf
+    ;{ Build Mrdf header
+    MrdfRecord.s = Space(2)
+    MrdfRecord + RSet(JobNr,8,"0")
+    MrdfRecord + Space(203)
+    MrdfRecord + Zero(5)
+    MrdfRecord + Space(19)
+    MrdfRecord + Zero(5)
+    MrdfRecord + "2"    
+    MrdfRecord + RSet(Str(Documents),6,"0")
+    MrdfRecord + RSet(Str(TotalPages),10,"0")
+    MrdfRecord + Space(122)
+    For i = 1 To 6
+      If Stations(i) > 0
+        MrdfRecord + "2" 
+      Else
+        MrdfRecord + "1"
+      EndIf
+    Next i
+    MrdfRecord + String("1", 10)
+    MrdfRecord + Space(328)
+    MrdfRecord + Zero(16*6)
+    MrdfRecord + LSet(OutputFile, 60)
+    MrdfRecord + Space(138)
+    WriteStringN(MrdfFileNr, MrdfRecord)
+    ;}
     ForEach MrdfLines()
       WriteStringN(MrdfFileNr, MrdfLines())
     Next
@@ -523,7 +549,7 @@ Return
 ;   
 ; EndDataSection 
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 141
-; FirstLine = 112
-; Folding = eN9
+; CursorPosition = 524
+; FirstLine = 400
+; Folding = eN0
 ; EnableXP

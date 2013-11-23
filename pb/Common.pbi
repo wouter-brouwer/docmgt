@@ -99,6 +99,14 @@ Procedure DebugHexMem(*Pointer, Length)
   ;CallDebugger
 EndProcedure
 
+Procedure.s String(String.s, Length)
+  ProcedureReturn RSet("", Length, String)
+EndProcedure
+
+Procedure.s Zero(Length)
+  ProcedureReturn String("0", Length)
+EndProcedure
+
 Procedure PokeUU(*Buffer, Value.u)
   ; Zet een 2bytes unsigned waarde in het geheugen met de high order byte eerst
   l1.c = Value / 256
@@ -189,7 +197,6 @@ Procedure.s CheckDirectory(Dir.s)
   EndIf
 EndProcedure
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 117
-; FirstLine = 4
-; Folding = AN9
+; CursorPosition = 106
+; Folding = AAw
 ; EnableXP
