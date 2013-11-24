@@ -21,9 +21,9 @@ EndProcedure
 Test = #True
 
 If Test
-  If FileSize("/aiw/aiw1/System/icf") = -2
-    InputDirectory.s = "/aiw/aiw1/System/icf/PB_in"
-    OutputDirectory.s = "/aiw/aiw1/System/icf/PB_out"    
+  If FileSize("/aiw/aiw1/openloop/data") = -2
+    InputDirectory.s = "/aiw/aiw1/openloop/data/output/mrdf"
+    OutputDirectory.s = "/aiw/aiw1/openloop/data/input/result"    
   ElseIf FileSize("c:\") = -2
     InputDirectory = "input"
     OutputDirectory = "output"
@@ -66,7 +66,7 @@ Repeat
     FinishDirectory(0)
   EndIf
   If Option <> "-d"
-    Break
+    ;Break
   EndIf
   Delay(5000) ; Poll every 5 seconds
 ForEver
@@ -78,8 +78,10 @@ VerwerkFile:
   If ReadFile(1, InputFile)
     InputLine.s = ReadString(1) ; Header
     CreateFile(2, TmpFile)
+    Record = 0
     While Not Eof(1)
       InputLine.s = ReadString(1)
+      Record + 1
       
 ;{    Parse InputLine
       JobID_Filler.s = Mid(InputLine, 1, 2)
@@ -116,10 +118,12 @@ VerwerkFile:
       ;Delay(30)
       TimeStampInserter.s = LSet(FormatDate("%mm/%dd/%yyyy%hh:%ii:%ss", Date()),18)
       x = Random(100,1)
-      If x <= 1 ; 1% uitval
+;      If x <= 1 ; 1% uitval
+      If (Record + 75) % 100 = 0 ; 1% uitval
         Disposition.s = "06"
         DispositionText.s = LSet("Unprocessed", 30)
-      ElseIf x <= 2 ; 1% handmatig gecorrigeerd
+;      ElseIf x <= 2 ; 1% handmatig gecorrigeerd
+      ElseIf (Record + 50) % 100 = 0 ; 1% handmatig gecorrigeerd
         Disposition.s = "08"
         DispositionText.s = LSet("ManuallyRepaired", 30)
       Else
@@ -178,8 +182,8 @@ VerwerkFile:
   EndIf
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 75
-; FirstLine = 2
-; Folding = s+
+; IDE Options = PureBasic 5.20 LTS (Linux - x64)
+; CursorPosition = 68
+; FirstLine = 19
+; Folding = u+
 ; EnableXP

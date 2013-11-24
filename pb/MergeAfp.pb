@@ -8,7 +8,6 @@
 
 ;}
 
-
 NewList MrdfLines.s()
 
 IncludeFile "Common.pbi"
@@ -135,12 +134,6 @@ EBClen = PokeHexString(*EBC, HexString)
 
 ;{ Initialisatie
 
-;InstelHoekjeA4Len = ?EndInstelHoekjeA4 - ?InstelHoekjeA4
-;*InstelHoekjeA4 = ?InstelHoekjeA4
-
-;InstelHoekjeA5Len = ?EndInstelHoekjeA5 - ?InstelHoekjeA5
-;*InstelHoekjeA5 = ?InstelHoekjeA5
-
 If Not OpenPreferences("openloop.ini")
   LogMsg("Critical: Unable to open openloop.ini")
 EndIf
@@ -185,6 +178,10 @@ HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 ERGlen = PokeHexString(*ERG, HexString)
 
 NewList FileNames.s()
+NewList JobDirs.s()
+
+LogMsg(#Prog + " started")
+
 ;}
 
 ;{ Main loop
@@ -196,18 +193,12 @@ Repeat
   If FileSize(#PauseFile) < 0 And Not Quit
 
     ;{ Loop door de jobs
-    If ExamineDirectory(0, JobsDir, "*.*")
-      While NextDirectoryEntry(0)
-        If DirectoryEntryType(0) = #PB_DirectoryEntry_Directory
-          JobName.s = DirectoryEntryName(0)
-          If Left(JobName, 1) <> "." And Right(JobName, 5) <> ".busy" And Right(JobName, 5) <> ".done"
-            JobDir.s = JobsDir + JobName + "/"
-            Gosub VerwerkJob
-          EndIf
-        EndIf
-      Wend
-      FinishDirectory(0)
-    EndIf
+    GetDirSorted(JobDirs(), JobsDir, "*.todo", #PB_DirectoryEntry_Directory)
+
+    ForEach JobDirs()
+      JobName.s = ReplaceString(JobDirs(), ".todo", "")
+      Gosub VerwerkJob
+    Next
     ;}
   
   EndIf
@@ -216,12 +207,13 @@ Repeat
   Delay(1000)
   
   ; TEST
-  Quit = 1
+  ;Quit = 1
   
 Until Quit
 ;}
 
 ;{ Afsluiting
+LogMsg(#Prog + " ended")
 LockFile("close")
 End
 ;}
@@ -231,25 +223,14 @@ VerwerkJob:
 
   LogMsg("Processing job " + JobName)
 
+  JobDir.s = JobsDir + JobName
   Stroom.s = StringField(JobName, 1, "_")
   JobNr.s = StringField(JobName, 2, "_")
   Dim Stations(6) 
   ResourcesSubDir.s = CheckDirectory(ResourcesDir + Stroom)
 
-  ;{ Zet de filenamen in een list om ze gesorteerd te kunnen verwerken
-  ClearList(FileNames())
-  If ExamineDirectory(1, JobDir, "*.afp")
-    While NextDirectoryEntry(1)
-      If DirectoryEntryType(1) = #PB_DirectoryEntry_File
-        AddElement(FileNames())
-        FileNames() = DirectoryEntryName(1)
-      EndIf
-    Wend
-    FinishDirectory(1)
-  EndIf
-  ;}
-  
-  SortList(FileNames(), #PB_Sort_Ascending)
+  ; Zet de filenamen in een list om ze gesorteerd te kunnen verwerken
+  GetDirSorted(FileNames(), JobDir + ".todo", "*.afp", #PB_DirectoryEntry_File)
   
   ClearList(MrdfLines())
   
@@ -258,17 +239,6 @@ VerwerkJob:
     ;{ VerwerkFile    
     If OutputFileNr = 0      
       ;{ OpenOutputFile
-      
-      ; Read Header
-      HeaderFile.s = StringField(InputFile, 1, "_0") + "_header.afp"
-      HeaderFileNr = ReadFile(#PB_Any, ResourcesSubDir + HeaderFile)
-      If HeaderFileNr = 0 
-        LogMsg("Critical: Can not read " + HeaderDir + HeaderFile)
-      EndIf  
-      HeaderLength = Lof(HeaderFileNr)
-      *HeaderBuffer = AllocateMemory(HeaderLength)
-      ReadData(HeaderFileNr, *HeaderBuffer, HeaderLength)
-      CloseFile(HeaderFileNr)
       
       ; Create OutputFile
       OutputFile.s = JobName + ".tmp"
@@ -302,9 +272,9 @@ VerwerkJob:
     
       ;}
     EndIf
-    InputFileNr = ReadFile(#PB_Any, JobDir + InputFile)
+    InputFileNr = ReadFile(#PB_Any, JobDir + ".todo/" + InputFile)
     If InputFileNr = 0 
-      LogMsg("Critical: Unable to read " + JobDir + InputFile)
+      LogMsg("Critical: Unable to read " + JobDir + ".todo/" + InputFile)
     EndIf    
     Documents + 1
     PageNr = 0
@@ -472,9 +442,9 @@ VerwerkJob:
     MrdfRecord + Space(672)
     MrdfRecord + LSet(StringField(InputFile, 1, "_P"), 30)
     MrdfRecord + Zero(12)
-    MrdfRecord + Space(78)
+    MrdfRecord + Space(88)
     MrdfRecord + Zero(4)
-    MrdfRecord + Space(122)
+    MrdfRecord + Space(112)
     ;Debug MrdfRecord
     AddElement(MrdfLines())
     MrdfLines() = MrdfRecord
@@ -494,8 +464,8 @@ VerwerkJob:
     
     LogMsg("Info: " + JobName + ".afp created with " + Str(Documents) + " documents")
     ;}
-    MrdfFile.s = OutputMrdfDir + JobNr + ".inp"
-    MrdfFilenr = CreateFile(#PB_Any, MrdfFile)
+    MrdfFile.s = OutputMrdfDir + JobNr
+    MrdfFilenr = CreateFile(#PB_Any, MrdfFile + ".tmp")
     If Not MrdfFilenr
       LogMsg("Critical: Unable to create " + MrdfFile)
     EndIf
@@ -509,7 +479,7 @@ VerwerkJob:
     MrdfRecord + "2"    
     MrdfRecord + RSet(Str(Documents),6,"0")
     MrdfRecord + RSet(Str(TotalPages),10,"0")
-    MrdfRecord + Space(122)
+    MrdfRecord + Space(132)
     For i = 1 To 6
       If Stations(i) > 0
         MrdfRecord + "2" 
@@ -528,28 +498,15 @@ VerwerkJob:
       WriteStringN(MrdfFileNr, MrdfLines())
     Next
     CloseFile(MrdfFileNr)
+    RenameFile(MrdfFile + ".tmp", MrdfFile + ".inp")
   EndIf
   
-  Done.s = ReplaceString(JobDir + ".done", "/.", ".")
-  
-  ; TEST
-  ;RenameFile(JobDir, Done)
+  RenameFile(JobDir + ".todo", JobDir + ".busy")
 Return
 ;}
 
-; DataSection
-;   
-;   ;InstelHoekjeA4:
-;   ;  IncludeBinary "instelhoekje.A4.afp"
-;   ;EndInstelHoekjeA4:
-;     
-;   InstelHoekjeA5:
-;     IncludeBinary "instelhoekje.A5.afp"
-;   EndInstelHoekjeA5:
-;   
-; EndDataSection 
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 524
-; FirstLine = 400
-; Folding = eN0
+; CursorPosition = 216
+; FirstLine = 48
+; Folding = 1H9
 ; EnableXP

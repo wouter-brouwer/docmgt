@@ -196,7 +196,41 @@ Procedure.s CheckDirectory(Dir.s)
     ProcedureReturn Dir + "/"
   EndIf
 EndProcedure
+
+Procedure GetDirSorted(List Names.s(), Directory.s, Pattern.s, EntryType.l, RegEx.s = "")
+  ClearList(Names())
+  DirNr = ExamineDirectory(#PB_Any, Directory, Pattern)
+  If DirNr > 0
+    While NextDirectoryEntry(DirNr)
+      If DirectoryEntryType(DirNr) = EntryType
+        EntryName.s = DirectoryEntryName(DirNr)
+        If EntryName <> "." And EntryName <> ".."          
+          If RegEx <> ""
+            If CreateRegularExpression(0, RegEx)
+              If Not MatchRegularExpression(0, EntryName)
+                Continue
+              EndIf
+            Else
+              Debug RegularExpressionError()
+            EndIf
+          EndIf
+          AddElement(Names())
+          Names() = EntryName
+        EndIf
+      EndIf
+    Wend
+    FinishDirectory(DirNr)
+  EndIf
+  SortList(Names(), #PB_Sort_Ascending)
+EndProcedure
+
+;NewList Lijst.s()
+;GetDirSorted(Lijst(), "/aiw/aiw1/openloop", "*.*", #PB_DirectoryEntry_Directory, "^b")
+;ForEach Lijst()
+;  Debug Lijst()
+;Next
+
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 106
-; Folding = AAw
+; CursorPosition = 207
+; Folding = AAg
 ; EnableXP

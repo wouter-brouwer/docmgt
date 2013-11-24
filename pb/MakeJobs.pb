@@ -575,12 +575,15 @@ Repeat
         Next i
         If AantalDocs > 0
           LogMsg(JobName.s + " created with " + Str(AantalDocs) + " documents and " + Str(AantalPages) + " pages")
+          If Right(JobDir.s, 5) = ".tmp/"
+            RenameFile(JobDir, ReplaceString(JobDir, ".tmp/", ".todo/"))
+          EndIf
         EndIf
       
         ;}
         
         ; TEST
-        Quit = 1
+        ;Quit = 1
         
       Wend
       CloseFile(1) ; Regels
@@ -599,6 +602,7 @@ Until Quit
 ;}
 
 ;{ Afsluiting
+LogMsg(#Prog + " ended")
 LockFile("close")
 
 If TimeFileNr
@@ -629,7 +633,10 @@ VerwerkFile:
   If AantalDocs = 1
     JobNr + 1        
     JobName.s = ReplaceString(Stromen, ";", "_") + RSet(Str(JobNr), 8, "0")
-    JobDir.s = JobsDir + JobName + "/"
+    If Right(JobDir, 5) = ".tmp/"
+      RenameFile(JobDir, ReplaceString(JobDir, ".tmp/", ".todo/"))
+    EndIf
+    JobDir.s = JobsDir + JobName + ".tmp/"
     If Not CreateDirectory(JobDir)
       LogMsg("Critical: Unable to create " + JobDir)
     EndIf 
@@ -650,8 +657,9 @@ VerwerkFile:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 583
-; FirstLine = 49
-; Folding = gFA5
+; CursorPosition = 605
+; FirstLine = 12
+; Folding = QFA-
 ; EnableUnicode
 ; EnableXP
+; Executable = MakeJobs

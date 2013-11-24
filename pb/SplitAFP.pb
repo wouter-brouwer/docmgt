@@ -10,8 +10,7 @@
 ; Bij de verwerking wordt een <timestamp> bepaald uit systeemdatum yyyymmddhhiiss
 ; als deze gelijk is aan de vorige wordt een seconde gewacht.
 
-; De uitvoer bestanden heten <stroom>_<timestamp>_header.afp in /aiw/aiw1/documenten/headers
-;  en <stroom>_<timestamp>_<sequencenr>_p<pages>.afp
+; De uitvoer bestanden heten <stroom>_<timestamp>_<sequencenr>_p<pages>.afp
 
 ;}
 
@@ -78,12 +77,13 @@ Repeat
   Delay(100) ; CPU besparing
   
   ; TEST
-  Quit = 1
+  ;Quit = 1
   
 Until Quit
 ;}
   
 ;{ Afsluiting
+LogMsg(#Prog + " ended")
 LockFile("close")
 End
 ;}
@@ -133,13 +133,13 @@ VerwerkFile:
     Return
   EndIf
   
-  HeaderFile.s = OutputBase + "_header" + ".afp"
-  HeaderFileNr = CreateFile(#PB_Any, TmpSubDir + HeaderFile)
-  If HeaderFileNr = 0
-    Error = "HeaderFile '" + TmpSubDir + HeaderFile + "' can not be opened."
-    Gosub VerwerkFileError
-    Return
-  EndIf
+  ;HeaderFile.s = OutputBase + "_header" + ".afp"
+  ;HeaderFileNr = CreateFile(#PB_Any, TmpSubDir + HeaderFile)
+  ;If HeaderFileNr = 0
+  ;  Error = "HeaderFile '" + TmpSubDir + HeaderFile + "' can not be opened."
+  ;  Gosub VerwerkFileError
+  ;  Return
+  ;EndIf
   
   NamedGroupLevel = 0
   Documents = 0
@@ -162,9 +162,6 @@ VerwerkFile:
       Error = InputDir + InputFile + " contains invalid AFP"
       Break
     EndIf
-    ;l1.c = ReadCharacter(InputFileNr)
-    ;l2.c = ReadCharacter(InputFileNr)
-    ;RecordLength = 256 * l1 + l2 - 2
     RecordLength.u = ReadUU(InputFileNr) - 2
     
     ReadData(InputFileNr, *AFPRecord, RecordLength)
@@ -174,9 +171,7 @@ VerwerkFile:
     SFID.s = HexString(PeekS(*AFPRecord,3))
     
     Select SFID
-        
-        
-        
+       
       Case BR
         ResName.s = EbcdicToAscii(PeekS(*AFPRecord + 6, 8)) + ".res"
         ResFileNr = CreateFile(#PB_Any, TmpSubDir + ResName)
@@ -191,7 +186,7 @@ VerwerkFile:
       Case BDT
         ;Debug "BDT"
         Header = 0
-        CloseFile(HeaderFileNr)
+        ;CloseFile(HeaderFileNr)
         HeaderFileNr = 0
         Skip = 1
         
@@ -234,12 +229,6 @@ VerwerkFile:
         EndIf
         ;}
         
-        ; TEST
-        If Documents >= 3000
-          FileSeek(InputFileNr, Lof(InputFileNr))
-          Continue
-        EndIf
-        
         Documents + 1
         
         ;{ Output bestand openen
@@ -268,11 +257,11 @@ VerwerkFile:
         WriteCharacter(FileNr, l0)
         WriteUU(FileNr, RecordLength + 2)
         WriteData(FileNr, *AFPRecord, RecordLength)
-        If ResFileNr
-          WriteCharacter(ResFileNr, l0)
-          WriteUU(ResFileNr, RecordLength + 2)
-          WriteData(ResFileNr, *AFPRecord, RecordLength)
-        EndIf
+      EndIf
+      If ResFileNr
+        WriteCharacter(ResFileNr, l0)
+        WriteUU(ResFileNr, RecordLength + 2)
+        WriteData(ResFileNr, *AFPRecord, RecordLength)
       EndIf
     EndIf
     ;}
@@ -337,9 +326,9 @@ VerwerkFile:
   
   ; Move all files to final destinations
   
-  If Not RenameFile(TmpSubDir + HeaderFile, ResourcesSubDir + HeaderFile)
-    LogMsg("Critical: Unable to move " + TmpSubDir + HeaderFile + " to " + ResourcesSubDir + HeaderFile)
-  EndIf
+  ;If Not RenameFile(TmpSubDir + HeaderFile, ResourcesSubDir + HeaderFile)
+  ;  LogMsg("Critical: Unable to move " + TmpSubDir + HeaderFile + " to " + ResourcesSubDir + HeaderFile)
+  ;EndIf
   
   ForEach OutputFiles()
     If Not RenameFile(TmpSubDir + OutputFiles(), TodoSubDir + OutputFiles())
@@ -347,20 +336,12 @@ VerwerkFile:
     EndIf
   Next
   
-  ; Fiets door alle resources uit de tmp directory
+  DeleteDirectory(TmpSubDir, "") 
   
-  
-  DeleteDirectory(TmpSubDir, "")
-  ;} 
-  
-Return ; <--- TEST
-  
-  If RenameFile(InputDir + InputFile, InputDir + InputFile + ".done")
-    LogMsg(InputDir + InputFile + " moved to " + ProcessedDir)  
-  Else
-    Logmsg("Critical: Unable move " + InputDir + InputFile + " to " + ProcessedDir)
+  If Not RenameFile(InputDir + InputFile, InputDir + InputFile + ".done")
+    Logmsg("Critical: Unable rename " + InputDir + InputFile + " to " + InputFile + ".done")
   EndIf
- 
+  ;} 
 Return
 ;}
 
@@ -402,7 +383,7 @@ VerwerkFileError:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 237
-; FirstLine = 78
-; Folding = Q-+
+; CursorPosition = 86
+; Folding = gI+
 ; EnableXP
+; Executable = SplitAFP

@@ -4,22 +4,22 @@
 #StopFile = #Prog + ".stop"
 
 Procedure LockFile(Option.s)
-  
-  Static LockFileNr
-  
+   
   Select LCase(Option)
       
     Case "open"
       
-      LockFileNr = CreateFile(#PB_Any, #LockFile)
-      ProcedureReturn LockFileNr
+      If FileSize(GetPathPart(ProgramFilename()) + "/" + #LockFile) < 0
+        CloseFile(CreateFile(#PB_Any, GetPathPart(ProgramFilename()) + "/" + #LockFile))
+        ProcedureReturn #True
+      Else
+        ProcedureReturn #True
+      EndIf
 
     Case "close"
       
-      CloseFile(LockFileNr)
-      LockFileNr = 0
-      DeleteFile(#StopFile)
-      ProcedureReturn DeleteFile(#LockFile)
+      DeleteFile(GetPathPart(ProgramFilename()) + "/" + #StopFile)
+      ProcedureReturn DeleteFile(GetPathPart(ProgramFilename()) + "/" + #LockFile)
       
   EndSelect
   
@@ -29,9 +29,13 @@ EndProcedure
 If CountProgramParameters() > 0
   Select LCase(ProgramParameter())
     Case "start"
+      PID = ProgramID(RunProgram(ProgramFilename(),"",GetPathPart(ProgramFilename())))
+      OpenConsole()
+      PrintN("Started as PID " + Str(PID))
+      End
       
     Case "stop"
-      If CreateFile(0, #StopFile)
+      If CreateFile(0, GetPathPart(ProgramFilename()) + "/" + #StopFile)
         CloseFile(0)
         End
       Else
@@ -41,7 +45,7 @@ If CountProgramParameters() > 0
       EndIf
       
     Case "pause"
-      If CreateFile(0, #PauseFile)
+      If CreateFile(0, GetPathPart(ProgramFilename()) + "/" + #PauseFile)
         CloseFile(0)
         End
       Else
@@ -51,12 +55,12 @@ If CountProgramParameters() > 0
       EndIf
       
     Case "resume"
-      If Not DeleteFile(#PauseFile)
+      If Not DeleteFile(GetPathPart(ProgramFilename()) + "/" + #PauseFile)
         OpenConsole()
         PrintN("Unable to delete " + #PauseFile)
         End 1
       EndIf
-        
+      End 
         
     Default
       OpenConsole()
@@ -69,13 +73,12 @@ EndIf
 
 If Not LockFile("open")
   OpenConsole()
-  PrintN("Unable to create " + #LockFile + " Program already running?")
+  PrintN("The program is probably running because " + #LockFile + " exists")
+  Debug #LockFile + " exists"
   End 1
 EndIf
 ;}
-
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 58
-; FirstLine = 16
+; IDE Options = PureBasic 5.20 LTS (Linux - x64)
+; CursorPosition = 18
 ; Folding = -
 ; EnableXP
