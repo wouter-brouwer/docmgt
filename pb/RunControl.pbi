@@ -1,29 +1,27 @@
-;{ RunControl
-#LockFile = #Prog + ".lock"
-#PauseFile = #Prog + ".pause"
-#StopFile = #Prog + ".stop"
+; RunControl
 
-Procedure LockFile(Option.s)
-   
-  Select LCase(Option)
-      
-    Case "open"
-      
-      If FileSize(GetPathPart(ProgramFilename()) + "/" + #LockFile) < 0
-        CloseFile(CreateFile(#PB_Any, GetPathPart(ProgramFilename()) + "/" + #LockFile))
-        ProcedureReturn #True
-      Else
-        ProcedureReturn #True
-      EndIf
+; Deze includefile bevat de logica
+; - om te laten zien dat een programma draait
+; - om te voorkomen dat een programma dubbel draait
+; - om een programma te starten als achtergrond proces
+; - om een programma te laten pauzeren, vervolgen of stoppen
 
-    Case "close"
-      
-      DeleteFile(GetPathPart(ProgramFilename()) + "/" + #StopFile)
-      ProcedureReturn DeleteFile(GetPathPart(ProgramFilename()) + "/" + #LockFile)
-      
-  EndSelect
-  
-EndProcedure
+Global LockFile.s = RunControlDir.s + #Prog + ".lock"
+Global StopFile.s = RunControlDir.s + #Prog + ".stop"
+Global PauseFile.s = RunControlDir.s + #Prog + ".pause"
+
+Procedure HeartBeat(*Interval)
+  ; Deze Procedure toont de heartbeat in de vorm van een update van de filedate van de lockfile 
+  Repeat
+    FileNr = CreateFile(#PB_Any, RunControlDir.s + #Prog + ".lock")
+    If FileNr = 0
+      LogMsg("Critical: Unable to create " + RunControlDir.s + #Prog + ".lock")
+    Else
+      CloseFile(FileNr)
+    EndIf
+    Delay(*Interval) ; Eke seconde
+  ForEver
+EndProcedure  
 
 ;{ Handle program argument
 If CountProgramParameters() > 0
@@ -35,29 +33,29 @@ If CountProgramParameters() > 0
       End
       
     Case "stop"
-      If CreateFile(0, GetPathPart(ProgramFilename()) + "/" + #StopFile)
+      If CreateFile(0, StopFile)
         CloseFile(0)
         End
       Else
         OpenConsole()
-        PrintN("Unable to create " + #StopFile)
+        PrintN("Unable to create " + StopFile)
         End 1
       EndIf
       
     Case "pause"
-      If CreateFile(0, GetPathPart(ProgramFilename()) + "/" + #PauseFile)
+      If CreateFile(0, PauseFile)
         CloseFile(0)
         End
       Else
         OpenConsole()
-        PrintN("Unable to create " + #PauseFile)
+        PrintN("Unable to create " + PauseFile)
         End 1
       EndIf
       
     Case "resume"
-      If Not DeleteFile(GetPathPart(ProgramFilename()) + "/" + #PauseFile)
+      If Not DeleteFile(PauseFile)
         OpenConsole()
-        PrintN("Unable to delete " + #PauseFile)
+        PrintN("Unable to delete " + PauseFile)
         End 1
       EndIf
       End 
@@ -71,14 +69,18 @@ If CountProgramParameters() > 0
 EndIf
 ;}
 
-If Not LockFile("open")
+If FileDate(LockFile) > Date() - 5
   OpenConsole()
-  PrintN("The program is probably running because " + #LockFile + " exists")
-  Debug #LockFile + " exists"
+  PrintN("The program is probably running because recent " + LockFile)
+  Debug LockFile + " exists"
   End 1
 EndIf
-;}
+
+If Not CreateThread(@HeartBeat(), 1000)
+  LogMsg("Critical: Unable to create thread HeartBeat")
+EndIf
+
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 18
-; Folding = -
+; CursorPosition = 57
+; Folding = +
 ; EnableXP

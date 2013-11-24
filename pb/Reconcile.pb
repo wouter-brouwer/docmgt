@@ -16,10 +16,9 @@
 IncludeFile "Common.pbi"
 
 Global ConfigDir.s
+Global RunControlDir.s
 
 IncludeFile "StreamInfo.pbi"
-
-IncludeFile "RunControl.pbi"
 
 ;{ Initialisatie
 
@@ -33,7 +32,10 @@ LogDir = CheckDirectory(ReadPreferenceString("LogsDir",""))
 JobsDir.s = CheckDirectory(ReadPreferenceString("JobsDir",""))
 InputResultDir.s = CheckDirectory(ReadPreferenceString("InputResultDir",""))
 TodoDir.s = CheckDirectory(ReadPreferenceString("ToDoDir",""))
+RunControlDir.s = CheckDirectory(ReadPreferenceString("RunControlDir",""))
 ClosePreferences()
+
+IncludeFile "RunControl.pbi"
 
 NewList JobNames.s()
 NewList DocumentFileNames.s()
@@ -46,9 +48,9 @@ LogMsg(#Prog + " started")
 Quit = 0
 Repeat
   
-  Quit = Bool(FileSize(#StopFile) = 0)
+  Quit = Bool(FileSize(StopFile) = 0)
 
-  If FileSize(#PauseFile) < 0 And Not Quit
+  If FileSize(PauseFile) < 0 And Not Quit
 
     ;{ Loop door de busy jobs    
     GetDirSorted(JobNames(), JobsDir, "*.busy", #PB_DirectoryEntry_Directory)
@@ -76,7 +78,7 @@ Until Quit
 
 ;{ Afsluiting
 LogMsg(#Prog + " ended")
-LockFile("close")
+DeleteFile(StopFile)
 End
 ;}
 
@@ -121,7 +123,7 @@ VerwerkResult:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 119
-; FirstLine = 63
-; Folding = +-
+; CursorPosition = 123
+; Folding = K-
 ; EnableXP
+; Executable = /aiw/aiw1/openloop/bin/reconcile

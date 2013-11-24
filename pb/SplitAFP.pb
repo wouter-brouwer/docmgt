@@ -19,14 +19,11 @@ IncludeFile "Common.pbi"
 IncludeFile "AFP.pbi"
 
 Global ConfigDir.s
+Global RunControlDir.s
 
 IncludeFile "StreamInfo.pbi"
 
-IncludeFile "RunControl.pbi"
-
 ;{ Initialisatie
-
-NewList OutputFiles.s()
 
 If Not OpenPreferences("openloop.ini")
   LogMsg("Critical: Unable to open openloop.ini")
@@ -38,8 +35,10 @@ LogDir = CheckDirectory(ReadPreferenceString("LogsDir",""))
 InputDir.s = CheckDirectory(ReadPreferenceString("InputAfpDir",""))
 TodoDir.s = CheckDirectory(ReadPreferenceString("ToDoDir",""))
 ResourcesDir.s = CheckDirectory(ReadPreferenceString("ResourcesDir",""))
+RunControlDir.s = CheckDirectory(ReadPreferenceString("RunControlDir",""))
 ClosePreferences()
 
+IncludeFile "RunControl.pbi"
 
 ; <<< T.b.v. Controle-D fout correctie
 ; ENG End Named Group
@@ -49,6 +48,8 @@ HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 ENGlen = PokeHexString(*ENG, HexString)
 ; <<< T.b.v. Controle-D fout correctie
 
+NewList OutputFiles.s()
+
 LogMsg(#Prog + " started")
 ;}
 
@@ -56,9 +57,10 @@ LogMsg(#Prog + " started")
 Quit = 0
 Repeat
   
-  Quit = Bool(FileSize(#StopFile) = 0)
+  Quit = Bool(FileSize(StopFile) = 0)
 
-  If FileSize(#PauseFile) < 0 And Not Quit
+  If FileSize(PauseFile) < 0 And Not Quit
+    
     ; Verwerk alle AFP bestanden uit de input directory
     If ExamineDirectory(0, InputDir, "*.afp")
       While NextDirectoryEntry(0)
@@ -71,20 +73,18 @@ Repeat
       Wend
       FinishDirectory(0)
     EndIf
+    
   EndIf
 
   LogMsg("") ; Om logfile te kunnen closen bij geen activiteit
   Delay(100) ; CPU besparing
-  
-  ; TEST
-  ;Quit = 1
   
 Until Quit
 ;}
   
 ;{ Afsluiting
 LogMsg(#Prog + " ended")
-LockFile("close")
+DeleteFile(StopFile)
 End
 ;}
 
@@ -384,6 +384,6 @@ Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
 ; CursorPosition = 86
-; Folding = gI+
+; Folding = oI+
 ; EnableXP
 ; Executable = SplitAFP

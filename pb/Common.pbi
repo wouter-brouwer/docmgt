@@ -197,6 +197,20 @@ Procedure.s CheckDirectory(Dir.s)
   EndIf
 EndProcedure
 
+Procedure FileDate(FileName.s)
+  Path.s = GetPathPart(FileName)
+  File.s = GetFilePart(FileName)
+  DirNr = ExamineDirectory(#PB_Any, Path, File)
+  FileDate = -1
+  If DirNr
+    If NextDirectoryEntry(DirNr)
+      FileDate = DirectoryEntryDate(DirNr, #PB_Date_Modified)
+    EndIf
+    FinishDirectory(DirNr)
+  EndIf
+  ProcedureReturn FileDate
+EndProcedure
+
 Procedure GetDirSorted(List Names.s(), Directory.s, Pattern.s, EntryType.l, RegEx.s = "")
   ClearList(Names())
   DirNr = ExamineDirectory(#PB_Any, Directory, Pattern)
@@ -229,8 +243,7 @@ EndProcedure
 ;ForEach Lijst()
 ;  Debug Lijst()
 ;Next
-
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 207
-; Folding = AAg
+; CursorPosition = 244
+; Folding = AAA-
 ; EnableXP

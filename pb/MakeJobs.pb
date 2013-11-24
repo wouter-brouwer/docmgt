@@ -28,9 +28,8 @@
 
 IncludeFile "Common.pbi"
 
-IncludeFile "RunControl.pbi"
-
-NewList FileNames.s()
+Global ConfigDir.s
+Global RunControlDir.s
 
 Procedure IsTijd(Woord.s)
   If ParseDate("%hh:%ii:%ss", Woord) >= 0
@@ -143,9 +142,12 @@ InputDir.s = CheckDirectory(ReadPreferenceString("InputAfpDir",""))
 TodoDir.s = CheckDirectory(ReadPreferenceString("ToDoDir",""))
 JobsDir.s = CheckDirectory(ReadPreferenceString("JobsDir",""))
 ResourcesDir.s = CheckDirectory(ReadPreferenceString("ResourcesDir",""))
+RunControlDir.s = CheckDirectory(ReadPreferenceString("RunControlDir",""))
 ClosePreferences()
 
-LogMsg(#Prog + " started")
+IncludeFile "RunControl.pbi"
+
+NewList FileNames.s()
 
 If ReadFile(0, ConfigDir + "JobNr.txt")
   JobNr = Val(ReadString(0))
@@ -153,15 +155,17 @@ If ReadFile(0, ConfigDir + "JobNr.txt")
 EndIf
 
 TimeFileNr = ReadFile(#PB_Any, "xTimeFile.txt")
+
+LogMsg(#Prog + " started")
 ;}
 
 ;{ Main loop
 Quit = 0
 Repeat
   
-  Quit = Bool(FileSize(#StopFile) = 0)
+  Quit = Bool(FileSize(StopFile) = 0)
 
-  If FileSize(#PauseFile) < 0 And Not Quit
+  If FileSize(PauseFile) < 0 And Not Quit
     
   ;{ Bepaal datum en tijd
     ; Voor testdoeleinden uit een bestandje halen
@@ -207,7 +211,7 @@ Repeat
           LogMsg("Warning: Feestdagen moet uitgebreid worden voor het komende jaar")
         EndIf        
       Else        
-        LogMsg("Critical: Unable to open " + ConfigDir + "holodays.txt")
+        LogMsg("Critical: Unable to open " + ConfigDir + "holidays.txt")
       EndIf
       VorigeDatum = Datum
     EndIf
@@ -603,7 +607,7 @@ Until Quit
 
 ;{ Afsluiting
 LogMsg(#Prog + " ended")
-LockFile("close")
+DeleteFile(StopFile)
 
 If TimeFileNr
   CloseFile(TimeFileNr)
@@ -657,9 +661,9 @@ VerwerkFile:
 Return
 ;}
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 605
-; FirstLine = 12
-; Folding = QFA-
+; CursorPosition = 213
+; FirstLine = 98
+; Folding = wHA6
 ; EnableUnicode
 ; EnableXP
-; Executable = MakeJobs
+; Executable = /aiw/aiw1/openloop/bin/makejobs

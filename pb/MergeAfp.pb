@@ -15,10 +15,9 @@ IncludeFile "Common.pbi"
 IncludeFile "AFP.pbi"
 
 Global ConfigDir.s
+Global RunControlDir.s
 
 IncludeFile "StreamInfo.pbi"
-
-IncludeFile "RunControl.pbi"
 
 ;{ Maak Barcode records
 
@@ -145,7 +144,10 @@ JobsDir.s = CheckDirectory(ReadPreferenceString("JobsDir",""))
 OutputDir.s = CheckDirectory(ReadPreferenceString("OutputAfpDir",""))
 OutputMrdfDir.s = CheckDirectory(ReadPreferenceString("OutputMrdfDir",""))
 ResourcesDir.s = CheckDirectory(ReadPreferenceString("ResourcesDir",""))
+RunControlDir.s = CheckDirectory(ReadPreferenceString("RunControlDir",""))
 ClosePreferences()
+
+IncludeFile "RunControl.pbi"
 
 HexString = BDT + "00 0000 FFFFFFFF FFFFFFFF"
 HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
@@ -181,16 +183,15 @@ NewList FileNames.s()
 NewList JobDirs.s()
 
 LogMsg(#Prog + " started")
-
 ;}
 
 ;{ Main loop
 Quit = 0
 Repeat
   
-  Quit = Bool(FileSize(#StopFile) = 0)
+  Quit = Bool(FileSize(StopFile) = 0)
 
-  If FileSize(#PauseFile) < 0 And Not Quit
+  If FileSize(PauseFile) < 0 And Not Quit
 
     ;{ Loop door de jobs
     GetDirSorted(JobDirs(), JobsDir, "*.todo", #PB_DirectoryEntry_Directory)
@@ -214,7 +215,7 @@ Until Quit
 
 ;{ Afsluiting
 LogMsg(#Prog + " ended")
-LockFile("close")
+DeleteFile(StopFile)
 End
 ;}
 
@@ -504,9 +505,9 @@ VerwerkJob:
   RenameFile(JobDir + ".todo", JobDir + ".busy")
 Return
 ;}
-
 ; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 216
-; FirstLine = 48
-; Folding = 1H9
+; CursorPosition = 185
+; FirstLine = 23
+; Folding = 1G9
 ; EnableXP
+; Executable = /aiw/aiw1/openloop/bin/mergeafp
