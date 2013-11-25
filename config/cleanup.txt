@@ -1,0 +1,5 @@
+# Stuurbestand voor het verplaatsen/verwijderen van oude bestanden
+
+#Directory					FileSpec	Days	[Target]
+/aiw/aiw1/openloop/logs		*.*			7		/aiw/aiw1/openloop/logs/old
+/aiw/aiw1/openloop/logs/old	*.*			60
