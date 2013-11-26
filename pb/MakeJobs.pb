@@ -217,7 +217,7 @@ Repeat
     EndIf
     ;}
   
-    If Tijd <> VorigeTijd.s And ParseDate("%hh:%ii:%ss", Tijd) % 5 = 0; Elke 5 seconden
+    If Tijd <> VorigeTijd.s And ParseDate("%hh:%ii:%ss", Tijd) % 10 = 0; Elke 10 seconden
       
       Debug "Verwerking: " + Datum + " " + Tijd
       
@@ -580,7 +580,10 @@ Repeat
         If AantalDocs > 0
           LogMsg(JobName.s + " created with " + Str(AantalDocs) + " documents and " + Str(AantalPages) + " pages")
           If Right(JobDir.s, 5) = ".tmp/"
-            RenameFile(JobDir, ReplaceString(JobDir, ".tmp/", ".todo/"))
+            While Not RenameFile(JobDir.s, ReplaceString(JobDir, ".tmp/", ".todo/"))
+              Delay(1000)      
+              ; Dit lukt niet altijd direct
+            Wend
           EndIf
         EndIf
       
@@ -599,7 +602,7 @@ Repeat
   EndIf
   
   LogMsg("") ; Geef LogMsg gelegenheid om logfile te sluiten
-  
+  HeartBeat()
   Delay(100) ; CPU besparing
  
 Until Quit
@@ -626,6 +629,12 @@ VerwerkFile:
   If (MaxDocs > 0 And AantalDocs = MaxDocs) Or
      (MaxPages > 0 And AantalPages >= MaxPages)
     LogMsg(JobName.s + " created with " + Str(AantalDocs) + " documents and " + Str(AantalPages) + " pages")
+    If Right(JobDir, 5) = ".tmp/"
+      While Not RenameFile(JobDir.s, ReplaceString(JobDir, ".tmp/", ".todo/"))
+        Delay(1000)      
+        ; Dit lukt niet altijd direct
+      Wend
+    EndIf
     AantalDocs = 0
     AantalPages = 0
   EndIf
@@ -637,9 +646,6 @@ VerwerkFile:
   If AantalDocs = 1
     JobNr + 1        
     JobName.s = ReplaceString(Stromen, ";", "_") + RSet(Str(JobNr), 8, "0")
-    If Right(JobDir, 5) = ".tmp/"
-      RenameFile(JobDir, ReplaceString(JobDir, ".tmp/", ".todo/"))
-    EndIf
     JobDir.s = JobsDir + JobName + ".tmp/"
     If Not CreateDirectory(JobDir)
       LogMsg("Critical: Unable to create " + JobDir)
@@ -660,10 +666,10 @@ VerwerkFile:
 
 Return
 ;}
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 213
-; FirstLine = 98
-; Folding = wHA6
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 585
+; FirstLine = 166
+; Folding = wHA0
 ; EnableUnicode
 ; EnableXP
-; Executable = /aiw/aiw1/openloop/bin/makejobs
+; Executable = \aiw\aiw1\openloop\bin\makejobs

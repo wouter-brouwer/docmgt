@@ -68,7 +68,8 @@ Repeat
   EndIf
   
   LogMsg("")
-  Delay(1000)
+  HeartBeat()
+  Delay(100)
   
   ; TEST
   ;Quit = 1
@@ -122,8 +123,9 @@ VerwerkResult:
   LogMsg("Info: Job " + JobName + " completed with " + Str(OK) + " OK documents and " + Str(NOK) + " not OK documents")
 Return
 ;}
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 123
-; Folding = K-
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 71
+; FirstLine = 20
+; Folding = u-
 ; EnableXP
-; Executable = /aiw/aiw1/openloop/bin/reconcile
+; Executable = \aiw\aiw1\openloop\bin\reconcile

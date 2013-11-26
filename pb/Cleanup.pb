@@ -127,6 +127,7 @@ Repeat
   EndIf
   
   LogMsg("")
+  HeartBeat()
   Delay(1000)
   
   ; TEST
@@ -142,7 +143,7 @@ End
 ;}
 
 ; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 101
-; FirstLine = 26
-; Folding = Y9
+; CursorPosition = 129
+; FirstLine = 45
+; Folding = Y0
 ; Executable = O:\Program Files\STIOK\Cleanup.exe

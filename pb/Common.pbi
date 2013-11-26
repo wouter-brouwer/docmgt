@@ -37,6 +37,15 @@ Procedure LogMsg(Msg.s)
   
 EndProcedure
 
+Procedure Touch(FileName.s)
+  If FileSize(FileName) > 0
+    SetFileDate(FileName, #PB_Date_Modified, Date())
+  Else
+    CreateFile(0, FileName)
+    CloseFile(0)
+  EndIf
+EndProcedure
+
 Procedure.s HexString(String.s)
 
   For i = 1 To Len(String)
@@ -243,7 +252,7 @@ EndProcedure
 ;ForEach Lijst()
 ;  Debug Lijst()
 ;Next
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 244
-; Folding = AAA-
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 43
+; Folding = AAA+
 ; EnableXP

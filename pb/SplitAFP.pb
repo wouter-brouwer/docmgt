@@ -77,6 +77,7 @@ Repeat
   EndIf
 
   LogMsg("") ; Om logfile te kunnen closen bij geen activiteit
+  HeartBeat()
   Delay(100) ; CPU besparing
   
 Until Quit
@@ -148,7 +149,7 @@ VerwerkFile:
   Header = 1
   
   ; <<< T.b.v. Control-D fout correctie
-  NopRecord = 0
+  NamedGroupName.s = ""
   
   ;}
   
@@ -167,6 +168,10 @@ VerwerkFile:
     ReadData(InputFileNr, *AFPRecord, RecordLength)
     RecordNr + 1
     
+   ; If Documents = 10
+   ;   End
+   ; EndIf
+    
     ; Structured Field Identifier
     SFID.s = HexString(PeekS(*AFPRecord,3))
     
@@ -174,12 +179,18 @@ VerwerkFile:
        
       Case BR
         ResName.s = EbcdicToAscii(PeekS(*AFPRecord + 6, 8)) + ".res"
-        ResFileNr = CreateFile(#PB_Any, TmpSubDir + ResName)
+        If ResName <> "M1RESET " ; Control-D gril?
+          ResFileNr = CreateFile(#PB_Any, TmpSubDir + ResName)
+        EndIf
         
       Case NOP
         ; <<< T.b.v. Control-D fout correctie
-        If HexString(PeekS(*AFPRecord + 6, 8))  = "FFFFFFFFFFFFFFFF"
-          NopRecord = RecordNr
+        If Documents = 1 And NamedGroupName <> "" And RecordLength >= 14
+          If EbcdicToAscii(PeekS(*AFPRecord + 6, 8)) = NamedGroupName
+            PokeHexString(*AFPRecord , ENG)
+            SFID = ENG
+            LogMsg("ENG repaired for document " + Str(Documents) + " record " + Str(RecordNr))
+          EndIf
         EndIf
         ;
         
@@ -206,17 +217,14 @@ VerwerkFile:
         
       Case BNG
         ;Debug "BNG"
+        
         ; <<< T.b.v. Control-D fout correctie
-        If NopRecord = Record - 1 And LastEpgRecord = Record - 2 And NamedGroupLevel = 1
-          WriteData(OutputFileNr, *ENG, ENGlen)
-          LogMsg("ENG inserted for document " + Str(Documents))
-          NamedGroupLevel - 1
-        EndIf
-        ;
+        NamedGroupName.s = EbcdicToAscii(PeekS(*AFPRecord + 6, 8))
+        
         NamedGroupLevel + 1
         ;Debug Str(NamedGroupLevel)
         If NamedGroupLevel > 1
-          Error = "Bestand bevat geneste Named Groups"
+          Error = "Bestand bevat geneste Named Groups " + Str(RecordNr)
           Break
         EndIf
 
@@ -247,11 +255,11 @@ VerwerkFile:
       If Header = 1
         FileNr = HeaderFileNr
       Else
-        If NamedGroupLevel > 0 Or Stroom = "83"
+        ;If NamedGroupLevel > 0 Or Stroom = "82"
           FileNr = OutputFileNr
-        Else
-          FileNr = 0
-        EndIf
+        ;Else
+        ;  FileNr = 0
+        ;EndIf
       EndIf
       If FileNr > 0
         WriteCharacter(FileNr, l0)
@@ -331,6 +339,7 @@ VerwerkFile:
   ;EndIf
   
   ForEach OutputFiles()
+    Touch(TmpSubDir + OutputFiles())
     If Not RenameFile(TmpSubDir + OutputFiles(), TodoSubDir + OutputFiles())
         LogMsg("Critical: Unable to move " + TmpSubDir + OutputFiles() + " to " + TodoSubDir)
     EndIf
@@ -341,6 +350,7 @@ VerwerkFile:
   If Not RenameFile(InputDir + InputFile, InputDir + InputFile + ".done")
     Logmsg("Critical: Unable rename " + InputDir + InputFile + " to " + InputFile + ".done")
   EndIf
+  LogMsg("Ready")
   ;} 
 Return
 ;}
@@ -382,8 +392,9 @@ VerwerkFileError:
   
 Return
 ;}
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 86
-; Folding = oI+
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 182
+; FirstLine = 57
+; Folding = cJ+
 ; EnableXP
 ; Executable = SplitAFP

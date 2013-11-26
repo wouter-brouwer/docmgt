@@ -205,6 +205,7 @@ Repeat
   EndIf
   
   LogMsg("")
+  HeartBeat()
   Delay(1000)
   
   ; TEST
@@ -505,9 +506,9 @@ VerwerkJob:
   RenameFile(JobDir + ".todo", JobDir + ".busy")
 Return
 ;}
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 185
-; FirstLine = 23
-; Folding = 1G9
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 207
+; FirstLine = 47
+; Folding = 9G9
 ; EnableXP
-; Executable = /aiw/aiw1/openloop/bin/mergeafp
+; Executable = \aiw\aiw1\openloop\bin\mergeafp

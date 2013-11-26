@@ -10,17 +10,12 @@ Global LockFile.s = RunControlDir.s + #Prog + ".lock"
 Global StopFile.s = RunControlDir.s + #Prog + ".stop"
 Global PauseFile.s = RunControlDir.s + #Prog + ".pause"
 
-Procedure HeartBeat(*Interval)
-  ; Deze Procedure toont de heartbeat in de vorm van een update van de filedate van de lockfile 
-  Repeat
-    FileNr = CreateFile(#PB_Any, RunControlDir.s + #Prog + ".lock")
-    If FileNr = 0
-      LogMsg("Critical: Unable to create " + RunControlDir.s + #Prog + ".lock")
-    Else
-      CloseFile(FileNr)
-    EndIf
-    Delay(*Interval) ; Eke seconde
-  ForEver
+Procedure HeartBeat()
+  Static LastRun  
+  If Date() > LastRun + 1
+    Touch(LockFile)
+    LastRun = Date()
+  EndIf
 EndProcedure  
 
 ;{ Handle program argument
@@ -69,18 +64,21 @@ If CountProgramParameters() > 0
 EndIf
 ;}
 
-If FileDate(LockFile) > Date() - 5
+If FileDate(LockFile) > Date() - 10
   OpenConsole()
   PrintN("The program is probably running because recent " + LockFile)
   Debug LockFile + " exists"
   End 1
 EndIf
 
-If Not CreateThread(@HeartBeat(), 1000)
-  LogMsg("Critical: Unable to create thread HeartBeat")
-EndIf
+Touch(LockFile)
 
-; IDE Options = PureBasic 5.20 LTS (Linux - x64)
-; CursorPosition = 57
-; Folding = +
+;If Not CreateThread(@HeartBeat(), 1000)
+;  LogMsg("Critical: Unable to create thread HeartBeat")
+;EndIf
+
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 74
+; FirstLine = 19
+; Folding = -
 ; EnableXP
