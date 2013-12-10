@@ -1,11 +1,26 @@
-25-12-2013
-26-12-2013
-01-01-2014
-18-04-2014
-21-04-2014
-26-04-2014
-05-05-2014
-29-05-2014
-09-06-2014
-25-12-2014
-26-12-2014
+25-12-2013 1e Kerst
+26-12-2013 2e Kerst
+
+01-01-2014 Nieuwjaar
+#18-04-2014 Goede vrijdag
+20-04-2014 1e Paasdag
+21-04-2014 2e Paasdag
+26-04-2014 Koningsdag
+#05-05-2014 Bevrijdingsdag
+29-05-2014 Hemelvaart
+08-06-2014 1e Pinksterdag
+09-06-2014 2e Pinksterdag
+25-12-2014 Kerst
+26-12-2014 Kerst
+
+01-01-2015 Nieuwjaar
+#03-04-2015 Goede vrijdag
+05-04-2015 1e Paasdag
+06-04-2015 2e Paasdag
+27-04-2015 Koningsdag
+05-05-2015 Bevrijdingsdag
+14-05-2015 Hemelvaart
+24-05-2015 1e Pinksterdag
+25-05-2015 2e Pinksterdag
+25-12-2015 Kerst
+26-12-2015 Kerst

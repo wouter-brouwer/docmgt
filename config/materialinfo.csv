@@ -1,2 +1,10 @@
-code;size;weight;description
-225761;A5L;2,5;Cards Afscriften dubbelbaans
+code;type;size;weight;up;description
+224825;Papier;A5L;2,5;4;Spaar Afschriften dubbelbaans
+225761;Papier;A5L;2,5;4;Cards Afschriften dubbelbaans
+;;;;;
+224813;Envelop;C5;;;PostNL
+224842;Envelop;C5;;;Priority
+264104;Envelop;C5;;;Sandd
+;;;;;
+abc;Bijsluiter;;;;Bijsluiter ABC
+test;Bijsluiter;;;;Bijsluiter TEST

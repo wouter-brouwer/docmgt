@@ -17,10 +17,10 @@ Procedure LogMsg(Msg.s)
   ; Indien nodig de logfile openen
   If LogFileNr = 0
     ; Als hij te groot is aan een nieuwe beginnen
-    If FileSize(LogDir + #Prog + ".log") > 1024 * 1024 ; 1 MB
-      RenameFile(LogDir + #Prog + ".log", LogDir + #Prog + FormatDate("_%yyyy-%mm-%dd", Date()) + ".log")
+    If FileSize(LogDir + LCase(#Prog) + ".log") > 1024 * 1024 ; 1 MB
+      RenameFile(LogDir + LCase(#Prog) + ".log", LogDir + LCase(#Prog) + FormatDate("_%yyyy-%mm-%dd", Date()) + ".log")
     EndIf
-    LogFileNr = OpenFile(#PB_Any, LogDir + #Prog + ".log")
+    LogFileNr = OpenFile(#PB_Any, LogDir + LCase(#Prog) + ".log")
     FileSeek(LogFileNr, Lof(LogFileNr))
   EndIf
   
@@ -29,6 +29,9 @@ Procedure LogMsg(Msg.s)
   Regel.s = TimeStamp + " - " + Msg
   Debug Regel
   WriteStringN(LogFileNr, Regel)
+  OpenConsole()
+  PrintN(Regel)
+  CloseConsole()  
   
   ; Stoppen bij ernstige fout
   If FindString(LCase(Msg), "critical") = 1
@@ -252,7 +255,8 @@ EndProcedure
 ;ForEach Lijst()
 ;  Debug Lijst()
 ;Next
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 43
-; Folding = AAA+
+; IDE Options = PureBasic 5.11 (Linux - x86)
+; CursorPosition = 22
+; FirstLine = 41
+; Folding = BAA+
 ; EnableXP

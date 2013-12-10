@@ -454,23 +454,27 @@ Repeat
         EndIf
         ;}
         
+        ;{ Voor elke stroom
+        For i = 1 To CountString(Stromen, ";")
+          Stroom.s = StringField(Stromen, i, ";")
+          TodoStroomDir.s = TodoDir + Stroom + "/"
+          TodoFileSpec.s = Stroom + "*.*"
+        
         ;{ Check of er al oude bestanden zijn
         If Ouder > 0
           Match = 0
           Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii:%ss", Datum + " " + Tijd) - Ouder          
-          For i = 1 To CountString(Stromen, ";")
-            If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
-              While NextDirectoryEntry(0)
-                If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-                  FileDate = DirectoryEntryDate(0, #PB_Date_Modified)
-                  If FileDate <= Peil
-                    Match + 1
-                  EndIf
+          If ExamineDirectory(0, TodoStroomDir, TodoFileSpec)
+            While NextDirectoryEntry(0)
+              If DirectoryEntryType(0) = #PB_DirectoryEntry_File
+                FileDate = DirectoryEntryDate(0, #PB_Date_Modified)
+                If FileDate <= Peil
+                  Match + 1
                 EndIf
-              Wend
-              FinishDirectory(0)
-            EndIf
-          Next i
+              EndIf
+            Wend
+            FinishDirectory(0)
+          EndIf
           If Not Match
             Continue
           EndIf
@@ -481,19 +485,17 @@ Repeat
         If NietJonger >= 0
           Match = 0
           Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii:%ss", Datum + " " + Tijd) - NietJonger         
-          For i = 1 To CountString(Stromen, ";")
-            If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
-              While NextDirectoryEntry(0)
-                If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-                  If DirectoryEntryDate(0, #PB_Date_Modified) >= Peil
-                    Match + 1
-                    Break 2
-                  EndIf
+          If ExamineDirectory(0, TodoStroomDir, TodoFileSpec)
+            While NextDirectoryEntry(0)
+              If DirectoryEntryType(0) = #PB_DirectoryEntry_File
+                If DirectoryEntryDate(0, #PB_Date_Modified) >= Peil
+                  Match + 1
+                  Break 2
                 EndIf
-              Wend
-              FinishDirectory(0)
-            EndIf
-          Next i
+              EndIf
+            Wend
+            FinishDirectory(0)
+          EndIf
           If Match
             Continue
           EndIf
@@ -502,19 +504,17 @@ Repeat
           
         ;{ Check of er voldoende documenten zijn
         AantalDocs = 0
-        For i = 1 To CountString(Stromen, ";")
-          If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
-            While NextDirectoryEntry(0)
-              If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-                AantalDocs + 1
-                If AantalDocs >= MinDocs
-                  Break
-                EndIf
+        If ExamineDirectory(0, TodoStroomDir, TodoFileSpec)
+          While NextDirectoryEntry(0)
+            If DirectoryEntryType(0) = #PB_DirectoryEntry_File
+              AantalDocs + 1
+              If AantalDocs >= MinDocs
+                Break
               EndIf
-            Wend
-            FinishDirectory(0)
-          EndIf
-        Next i
+            EndIf
+          Wend
+          FinishDirectory(0)
+        EndIf
         If AantalDocs = 0 Or AantalDocs < MinDocs
           Continue
         EndIf
@@ -522,23 +522,21 @@ Repeat
                
         ;{ Check of er voldoende pagina's zijn
         AantalPages = 0
-        For i = 1 To CountString(Stromen, ";")
-          If ExamineDirectory(0, TodoDir + StringField(Stromen, i, ";"), StringField(Stromen, i, ";") + "*.*")
-            While NextDirectoryEntry(0)
-              If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-                FileName.s = DirectoryEntryName(0)
-                p = FindString(FileName, "_P")
-                e = FindString(FileName, ".")
-                Pages = Val(Mid(FileName, p + 2, e - p))
-                AantalPages + Pages
-                If AantalPages >= MinPages
-                  Break
-                EndIf
+        If ExamineDirectory(0, TodoStroomDir, TodoFileSpec)
+          While NextDirectoryEntry(0)
+            If DirectoryEntryType(0) = #PB_DirectoryEntry_File
+              FileName.s = DirectoryEntryName(0)
+              p = FindString(FileName, "_P")
+              e = FindString(FileName, ".")
+              Pages = Val(Mid(FileName, p + 2, e - p))
+              AantalPages + Pages
+              If AantalPages >= MinPages
+                Break
               EndIf
-            Wend
-            FinishDirectory(0)
-          EndIf
-        Next i
+            EndIf
+          Wend
+          FinishDirectory(0)
+        EndIf
         If AantalPages = 0 Or AantalPages < MinPages
           Continue
         EndIf
@@ -552,31 +550,27 @@ Repeat
         AantalPages = 0
         TotalDocs = 0
         TotalPages = 0
-        For i = 1 To CountString(Stromen, ";")
-          Stroom.s = StringField(Stromen, i, ";")
-          TodoStroomDir.s = TodoDir + Stroom + "/"
-          ClearList(FileNames())
-          If ExamineDirectory(0, TodoStroomDir, Stroom + "*.*")
-            While NextDirectoryEntry(0)
-              If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-                AddElement(FileNames())
-                FileNames() = DirectoryEntryName(0)
-              EndIf
-            Wend
-            FinishDirectory(0)
-            SortList(FileNames(), #PB_Sort_Ascending)
-            ForEach FileNames()
-              FileName = FileNames()
-              Gosub VerwerkFile
-              If MaxDocsRun > 0 And TotalDocs >= MaxDocsRun
-                Break
-              EndIf
-              If MaxPagesRun > 0 And TotalPages >= MaxPagesRun
-                Break
-              EndIf
-            Next
-          EndIf
-        Next i
+        ClearList(FileNames())
+        If ExamineDirectory(0, TodoStroomDir, TodoFileSpec)
+          While NextDirectoryEntry(0)
+            If DirectoryEntryType(0) = #PB_DirectoryEntry_File
+              AddElement(FileNames())
+              FileNames() = DirectoryEntryName(0)
+            EndIf
+          Wend
+          FinishDirectory(0)
+          SortList(FileNames(), #PB_Sort_Ascending)
+          ForEach FileNames()
+            FileName = FileNames()
+            Gosub VerwerkFile
+            If MaxDocsRun > 0 And TotalDocs >= MaxDocsRun
+              Break
+            EndIf
+            If MaxPagesRun > 0 And TotalPages >= MaxPagesRun
+              Break
+            EndIf
+          Next
+        EndIf
         If AantalDocs > 0
           LogMsg(JobName.s + " created with " + Str(AantalDocs) + " documents and " + Str(AantalPages) + " pages")
           If Right(JobDir.s, 5) = ".tmp/"
@@ -588,6 +582,9 @@ Repeat
         EndIf
       
         ;}
+        
+        Next i
+        ;} Stroom
         
         ; TEST
         ;Quit = 1
@@ -645,7 +642,7 @@ VerwerkFile:
   AantalPages + Pages
   If AantalDocs = 1
     JobNr + 1        
-    JobName.s = ReplaceString(Stromen, ";", "_") + RSet(Str(JobNr), 8, "0")
+    JobName.s = Stroom + "_" + RSet(Str(JobNr), 8, "0")
     JobDir.s = JobsDir + JobName + ".tmp/"
     If Not CreateDirectory(JobDir)
       LogMsg("Critical: Unable to create " + JobDir)
@@ -666,10 +663,10 @@ VerwerkFile:
 
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 585
-; FirstLine = 166
-; Folding = wHA0
+; IDE Options = PureBasic 5.11 (Linux - x86)
+; CursorPosition = 644
+; FirstLine = 235
+; Folding = wnF7
 ; EnableUnicode
 ; EnableXP
-; Executable = \aiw\aiw1\openloop\bin\makejobs
+; Executable = makeJobs

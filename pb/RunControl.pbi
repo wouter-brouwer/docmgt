@@ -6,14 +6,14 @@
 ; - om een programma te starten als achtergrond proces
 ; - om een programma te laten pauzeren, vervolgen of stoppen
 
-Global LockFile.s = RunControlDir.s + #Prog + ".lock"
-Global StopFile.s = RunControlDir.s + #Prog + ".stop"
-Global PauseFile.s = RunControlDir.s + #Prog + ".pause"
+Global BeatFile.s = RunControlDir.s + LCase(#Prog) + ".beat"
+Global StopFile.s = RunControlDir.s + LCase(#Prog) + ".stop"
+Global PauseFile.s = RunControlDir.s + LCase(#Prog) + ".pause"
 
 Procedure HeartBeat()
   Static LastRun  
   If Date() > LastRun + 1
-    Touch(LockFile)
+    Touch(BeatFile)
     LastRun = Date()
   EndIf
 EndProcedure  
@@ -64,21 +64,19 @@ If CountProgramParameters() > 0
 EndIf
 ;}
 
-If FileDate(LockFile) > Date() - 10
+If FileDate(BeatFile) > Date() - 10
   OpenConsole()
-  PrintN("The program is probably running because recent " + LockFile)
-  Debug LockFile + " exists"
+  PrintN("The program is probably running because recent " + BeatFile)
+  Debug BeatFile + " exists"
   End 1
 EndIf
 
-Touch(LockFile)
+Touch(BeatFile)
 
 ;If Not CreateThread(@HeartBeat(), 1000)
 ;  LogMsg("Critical: Unable to create thread HeartBeat")
 ;EndIf
-
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 74
-; FirstLine = 19
+; IDE Options = PureBasic 5.11 (Linux - x86)
+; CursorPosition = 10
 ; Folding = -
 ; EnableXP

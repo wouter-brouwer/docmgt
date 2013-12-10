@@ -19,7 +19,7 @@ Procedure.s StreamInfo(StreamCode.s, Keyword.s)
           If Keywords = ""
             Keywords = LCase(Line)
             If LCase(StringField(Keywords, 1, Separator)) <> "code"
-              LogMsg("Critical: The first column in " + FileName + " must be 'Code'")
+              ProcedureReturn "Critical: The first column in " + FileName + " must be 'Code'"
             EndIf
             KeywordCount = CountString(Keywords, Separator) + 1
           Else
@@ -30,7 +30,7 @@ Procedure.s StreamInfo(StreamCode.s, Keyword.s)
       Wend
       CloseFile(FileNr)
     Else
-      LogMsg("Critical: Unable to read " + FileName)
+      ProcedureReturn "Critical: Unable to read " + FileName
     EndIf
     LastRead = Date()
   EndIf  
@@ -41,8 +41,7 @@ Procedure.s StreamInfo(StreamCode.s, Keyword.s)
     EndIf
   Next Index
   If Index > KeywordCount
-    LogMsg("Error: Unable to find Keyword " + Keyword)
-    ProcedureReturn "error"
+    ProcedureReturn "Error: Unable to find Keyword " + Keyword
   EndIf  
   
   Found = 0
@@ -52,12 +51,11 @@ Procedure.s StreamInfo(StreamCode.s, Keyword.s)
     EndIf
   Next
   
-  LogMsg("Error: Unable to find StreamCode " + StreamCode)
-  ProcedureReturn "error"
+  ProcedureReturn "Error: Unable to find StreamCode " + StreamCode
 
 EndProcedure
 
 ; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 54
+; CursorPosition = 21
 ; Folding = -
 ; EnableXP

@@ -98,14 +98,14 @@ HexString = "D3EEEB 00 0000" ; SFID + Flags + Reserved
 ; BSA Barcode Symbol Data
 HexString + "00" ; Barcode flags
 HexString + "0025 0295"; x + y Coordinates
-HexString + "C0" ; Control flags
-HexString + "0010" ; Row size
-HexString + "0010" ; Number of rows
-HexString + "01" ; Sequence indicator
-HexString + "07" ; Total symbols
+HexString + "00" ; Control flags
+HexString + "0000" ; Row size
+HexString + "0000" ; Number of rows
+HexString + "00" ; Sequence indicator
+HexString + "00" ; Total symbols
 HexString + "FE" ; FileID byte 1
 HexString + "FE" ; FileID byte 2
-HexString + "40" ; Special function flags
+HexString + "00" ; Special function flags
 BDA_HeaderA5.s = HexString
 
 ; BDA Barcode Data
@@ -113,14 +113,14 @@ HexString = "D3EEEB 00 0000" ; SFID + Flags + Reserved
 ; BSA Barcode Symbol Data
 HexString + "00" ; Barcode flags
 HexString + "0025 0811"; x + y Coordinates
-HexString + "C0" ; Control flags
-HexString + "0010" ; Row size
-HexString + "0010" ; Number of rows
-HexString + "01" ; Sequence indicator
-HexString + "07" ; Total symbols
+HexString + "00" ; Control flags
+HexString + "0000" ; Row size
+HexString + "0000" ; Number of rows
+HexString + "00" ; Sequence indicator
+HexString + "00" ; Total symbols
 HexString + "FE" ; FileID byte 1
 HexString + "FE" ; FileID byte 2
-HexString + "40" ; Special function flags
+HexString + "00" ; Special function flags
 BDA_HeaderA4.s = HexString
 
 ; EBC End Barcode Object
@@ -179,6 +179,26 @@ HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *ERG = AllocateMemory(HexLen(HexString))
 ERGlen = PokeHexString(*ERG, HexString)
 
+HexString = BPG + "00 0000"
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BPG = AllocateMemory(HexLen(HexString))
+BPGlen = PokeHexString(*BPG, HexString)
+
+HexString = EPG + "00 0000"
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*EPG = AllocateMemory(HexLen(HexString))
+EPGlen = PokeHexString(*EPG, HexString)
+
+HexString = BAG + "00 0000"
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*BAG = AllocateMemory(HexLen(HexString))
+BAGlen = PokeHexString(*BAG, HexString)
+
+HexString = EAG + "00 0000"
+HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+*EAG = AllocateMemory(HexLen(HexString))
+EAGlen = PokeHexString(*EAG, HexString)
+
 NewList FileNames.s()
 NewList JobDirs.s()
 
@@ -230,7 +250,8 @@ VerwerkJob:
   JobNr.s = StringField(JobName, 2, "_")
   Dim Stations(6) 
   ResourcesSubDir.s = CheckDirectory(ResourcesDir + Stroom)
-
+  PGDlen = 0
+  
   ; Zet de filenamen in een list om ze gesorteerd te kunnen verwerken
   GetDirSorted(FileNames(), JobDir + ".todo", "*.afp", #PB_DirectoryEntry_File)
   
@@ -322,6 +343,12 @@ VerwerkJob:
           ;00 00 PageHeight
           PageHeight.u = PeekUU(*AFPRecord + 16)
           ;CallDebugger
+          If PGDlen = 0
+            HexString = PeekHexString(*AFPRecord, RecordLength)
+            HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
+            *PGD = AllocateMemory(HexLen(HexString))
+            PGDlen = PokeHexString(*PGD, HexString)
+          EndIf
           
         Case TLE
           ln.c = PeekC(*AFPRecord + 6)
@@ -363,7 +390,7 @@ VerwerkJob:
             Barcode + NextChannel
             Barcode + EdgeMarker
             Barcode + QualityCheck
-            Barcode = AsciiToEbcdic(Barcode)
+            ;Barcode = AsciiToEbcdic(Barcode)
             If PageSize = "A4"
               Hexstring.s = BDA_HeaderA4 + HexString(Barcode)
             Else
@@ -457,6 +484,13 @@ VerwerkJob:
   
   If OutputFileNr > 0
     ;{ Close OuputFile
+    If PageNr % 2 = 1
+      WriteData(OutputFileNr, *BPG, BPGlen)
+      WriteData(OutputFileNr, *BAG, BAGlen)
+      WriteData(OutputFileNr, *PGD, PGDlen)
+      WriteData(OutputFileNr, *EAG, EAGlen)
+      WriteData(OutputFileNr, *EPG, EPGlen)
+    EndIf
     WriteData(OutputFileNr, *EDT, EDTlen)
     CloseFile(OutputFileNr)
     OutputFileNr = 0
@@ -507,8 +541,8 @@ VerwerkJob:
 Return
 ;}
 ; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 207
-; FirstLine = 47
-; Folding = 9G9
+; CursorPosition = 253
+; FirstLine = 234
+; Folding = +v0
 ; EnableXP
-; Executable = \aiw\aiw1\openloop\bin\mergeafp
+; Executable = mergeAfp

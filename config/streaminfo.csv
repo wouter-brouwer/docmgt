@@ -1,16 +1,27 @@
-Code;PageSize;Plex;Color;PaperType;PaperCode;Envelop;Inserting;Insert1;Insert2;Insert3;Insert4;Insert5;Insert6;Mailer;MailClass;SLA
-#;;;;;;;;;;;;;;;;
-83;A5L;simplex;bw;cf;123456;34567;mps;abc;;;;;;PostNL;20;24h
-82;A5L;simplex;bw;cf;;c5;mps;;;;;;;PostNL;50;24h
-84;A5L;simplex;bw;cf;;c5;mps;;;;;;;PostNL;50;24h
-85;A5L;simplex;bw;cf;;c5;mps;;;;;;;PostNL;50;48h
-86;A5L;simplex;bw;cf;;c5;mps;;;;;;;PostNL;50;24h
-test;A5L;;;;;;manual;;;;;;;;;
-2d;A5L;;;;;;mse;;;;;;;;;
-#;;;;;;;;;;;;;;;;
-#;# voorbeeldwaarden;;;;;;;;;;;;;;;
-#;A4;simplex;bw;cf;;;;;;;;;;PostNL;20;
-#;A4L;dumplex;color;plano;;;mps;;;;;;;SANND;50;
-#;A5;;;;;;mse;;;;;;;;europe;
-#;A5L;;;;;;manual;;;;;;;;world;
-;;;;;;;booklet;;;;;;;;;
+Code;Description;PageSize;Plex;Color;PaperType;PaperCode;Envelop;Inserting;Insert1;Insert2;Insert3;Insert4;Insert5;Insert6;Mailer;MailClass;SLA
+#;;;;;;;;;;;;;;;;;
+82;CARDS ENKELV. CHARGE;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;Basic;
+83;CARDS MEERV. CHARGE;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;x;
+84;CARDS ENKELV. KREDIET;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;Basic;
+85;CARDS MEERV. KREDIET;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;x;
+86;CARDS BUITENLAND;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;btl;
+#;;;;;;;;;;;;;;;;;
+test;;A5L;;;;;;manual;;;;;;;;;
+2d;;A5L;;;;;;mse;;;;;;;;;
+#;;;;;;;;;;;;;;;;;
+60;INTERN PDP KLASSIEK SPAREN;A5L;simplex;bw;cf;224825;224813;manual;;;;;;;;X;
+61;MECH.NORMAAL KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;;Basic;
+62;MECH.PIEK KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;;Basic;
+63;MECH.BIJSL 1 KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;;Basic;
+64;MECH.BIJSL 2 KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;;Basic;
+65;MECH.BIJSL 3 KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;;Basic;
+66;MECH.BUITENLAND KL SPAREN;A5L;simplex;bw;cf;224825;224842;mps;;;;;;;;X;
+67;SPAREN MECHANISCH SANDD;A5L;simplex;bw;cf;224825;264104;mps;;;;;;;Sandd;;
+68;BRAILLE SPAREN;A5L;simplex;bw;cf;224825;Braille;manual;;;;;;;;X;
+#;;;;;;;;;;;;;;;;;
+#;;;;;;;;;;;;;;;;;
+#;;# voorbeeldwaarden;;;;;;;;;;;;;;;
+#;;A4;simplex;bw;cf;;;mps;;;;;;;PostNL;20;24h
+#;;A4L;dumplex;color;plano;;;mse;;;;;;;SANND;50;48h
+#;;A5;;;;;;manual;;;;;;;;europe;
+#;;A5L;;;;;;Booklet;;;;;;;;world;
