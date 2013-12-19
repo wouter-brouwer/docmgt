@@ -25,3 +25,16 @@ test;;A5L;;;;;;manual;;;;;;;;;
 #;;A4L;dumplex;color;plano;;;mse;;;;;;;SANND;50;48h
 #;;A5;;;;;;manual;;;;;;;;europe;
 #;;A5L;;;;;;Booklet;;;;;;;;world;
+;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;
+1;Afschriften Betalen Zakelijk enkelvoudig;A4;simplex;bw;cf;224829;224815;mse;;;;;;;;Basic;
+2;Afschriften Betalen Zakelijk 24h;A4;simplex;bw;cf;224829;224815;mse;;;;;;;;24h;
+4;Afschriften Betalen Zakelijk licht;A4;simplex;bw;cf;224829;224815;mse;;;;;;;;Basic;
+5;Afschriften Betalen Zakelijk zwaar;A4;simplex;bw;cf;224829;224815;mse;;;;;;;;Basic;
+6;Afschriften Betalen Zakelijk europa;A4;simplex;bw;cf;224829;224843;mse;;;;;;;;X;
+7;Afschriften Betalen Zakelijk wereld;A4;simplex;bw;cf;224829;224843;mse;;;;;;;;X;
+9;Afschriften Betalen Zakelijk extra zwaar;A4;simplex;bw;cf;224829;224816;;;;;;;;;X;
+10;;;;;;;;;;;;;;;;;
+11;;;;;;;;;;;;;;;;;
+12;;;;;;;;;;;;;;;;;
+14;;;;;;;;;;;;;;;;;

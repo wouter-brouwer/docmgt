@@ -7,6 +7,8 @@
 
 ; Dit programma repareert dat door hiervoor het eerste character van de codepage index te gebruiken.
 
+; Daarnaast repareert hij ook de fout met de puntgrootte nul van een font 
+
 ;}
 
 IncludeFile "Common.pbi"
@@ -22,7 +24,9 @@ If CountProgramParameters() <> 2
   End 1
 EndIf
 
+
 InputFile.s = ProgramParameter()
+;InputFile.s = "c:\tmp\10113072.print_range.afp"
 InputFileNr = ReadFile(#PB_Any, InputFile)
 If InputFileNr = 0 
   PrintN("Unable to read " + InputFile)
@@ -30,6 +34,7 @@ If InputFileNr = 0
 EndIf
   
 OutputFile.s = ProgramParameter()
+;OutputFile = InputFile + ".repaired"
 OutputFileNr = CreateFile(#PB_Any, OutputFile)
 If OutputFileNr = 0 
   PrintN("Unable to create " + OutputFile)
@@ -61,6 +66,13 @@ While Not Eof(InputFileNr)
   SFID.s = HexString(PeekS(*AFPRecord,3))
   
   Select SFID
+      
+    Case FND ; Font Description
+      Debug PeekHexString(*AFPRecord + 40, 6)
+      If PeekHexString(*AFPRecord + 40, 6) = "000000000000"
+        PokeHexString(*AFPRecord + 40, "006C006C006C")
+        PrintN(InputFile + " contains invalid FND at record " + Str(RecordNr))        
+      EndIf        
       
     Case CPC ; Code Page Control
       DefaultChar.s = EbcdicToAscii(PeekS(*AFPRecord + 6, 8))
@@ -100,8 +112,7 @@ End
 
 ;}
 ; IDE Options = PureBasic 5.11 (Linux - x86)
-; CursorPosition = 83
-; FirstLine = 36
-; Folding = 3
+; CursorPosition = 73
+; Folding = 4
 ; EnableXP
 ; Executable = RepairAFP

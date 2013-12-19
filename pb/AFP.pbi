@@ -53,6 +53,7 @@ ER.s = "D3A9CE" ; End Resource (R)
 ERG.s = "D3A9C6" ; End Resource Group
 ESG.s = "D3A9D9" ; End Resource Environment Group
 FGD.s = "D3A6C5" ; Form Environment Group Descriptor (Obsolete)
+FND.s = "D3A689" ; Font Description
 GAD.s = "D3EEBB" ; Graphics Data
 GDD.s = "D3A6BB" ; Graphics Data Descriptor
 ICP.s = "D3AC7B" ; IM Image Cell Position (C)
@@ -101,7 +102,7 @@ PTX.s = "D3EE9B" ; Presentation Text Data
 TLE.s = "D3A090" ; Tag Logical Element
 ;}
 ; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 30
+; CursorPosition = 55
 ; FirstLine = 26
 ; Folding = -
 ; EnableXP
