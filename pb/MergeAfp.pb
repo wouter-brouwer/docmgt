@@ -78,7 +78,7 @@ HexString + "0000" ; Desired symbol width
 HexString + "1C 00"; Data Matrix
 HexString + "FF"   ; Font
 HexString + "0000" ; Color
-HexString + "FF"   ; ModuleWidth in mils
+HexString + "11"   ; ModuleWidth in mils
 HexString + "FFFF" ; ElementHeight
 HexString + "01"   ; Height Multiplier
 HexString + "FFFF" ;WideNarrow ratio
@@ -237,6 +237,7 @@ Until Quit
 ;{ Afsluiting
 LogMsg(#Prog + " ended")
 DeleteFile(StopFile)
+DeleteFile(BeatFile)
 End
 ;}
 
@@ -416,18 +417,18 @@ VerwerkJob:
             HexString + "06 F7 00 00 2D 00" ; STO 90
             HexString + "05 75 00 08 01 " ; STC Black
             HexString + "04 C7 00 00" ; AMI X 0
-            HexString + "04 D3"  + RSet(Hex(PageHeight - 600), 4, "0")  ; AMB Y 7752 x'1E48' pageheight - 600
+            HexString + "04 D3"  + RSet(Hex(PageHeight - 300), 4, "0")  ; AMB Y 7752 x'1E48' pageheight - 600
             ;Debug RSet(Hex(PageHeight - 600), 4, "0")
             HexString + "07 E7" ; DBR Line Down
-            HexString + "02 4E" ; Length 590
-            HexString + "00 14" ; Width 20
+            HexString + "01 2C" ; Length 300
+            HexString + "00 0A" ; Width 10
             HexString + "00 "
-            HexString + "04 C7 00 14" ; AMI X 20
-            HexString + "04 D3" + RSet(Hex(PageHeight - 16), 4, "0") ; AMB Y 8336 x'2090' pageheight - 16
+            HexString + "04 C7 00 00" ; AMI X 0
+            HexString + "04 D3" + RSet(Hex(PageHeight - 10), 4, "0") ; AMB Y 8336 x'2090' pageheight - 10
             ;Debug RSet(Hex(PageHeight - 16), 4, "0")
             HexString + "07 E5" ; DIR Line Right
-            HexString + "02 4E" ; Length 590
-            HexString + "00 14" ; Width 20
+            HexString + "01 2C" ; Length 300
+            HexString + "00 0A" ; Width 10
             HexString + "00 "
             HexString + "02 F8" ; ???
             HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
@@ -473,7 +474,7 @@ VerwerkJob:
     MrdfRecord + Zero(12)
     MrdfRecord + Space(88)
     MrdfRecord + Zero(4)
-    MrdfRecord + Space(112)
+    MrdfRecord + Space(122)
     ;Debug MrdfRecord
     AddElement(MrdfLines())
     MrdfLines() = MrdfRecord
@@ -527,7 +528,7 @@ VerwerkJob:
     MrdfRecord + Space(328)
     MrdfRecord + Zero(16*6)
     MrdfRecord + LSet(OutputFile, 60)
-    MrdfRecord + Space(138)
+    MrdfRecord + Space(118)
     WriteStringN(MrdfFileNr, MrdfRecord)
     ;}
     ForEach MrdfLines()
@@ -540,9 +541,9 @@ VerwerkJob:
   RenameFile(JobDir + ".todo", JobDir + ".busy")
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 253
-; FirstLine = 234
-; Folding = +v0
+; IDE Options = PureBasic 5.11 (Linux - x86)
+; CursorPosition = 425
+; FirstLine = 113
+; Folding = Qz9
 ; EnableXP
 ; Executable = mergeAfp
