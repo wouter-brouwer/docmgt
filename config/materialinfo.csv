@@ -1,9 +1,22 @@
 code;type;size;weight;up;description
-224825;Papier;A5L;2,5;4;Spaar Afschriften dubbelbaans
+224825;Papier;A5L;2,5;4;Afschriften dubbelbaans
+224829;Papier;A4;;2;
 225761;Papier;A5L;2,5;4;Cards Afschriften dubbelbaans
+225866;Papier;A4;;2;
+228365;Papier;A4;;2;
+228366;Papier;A4;;2;
 ;;;;;
 224813;Envelop;C5;;;PostNL
+224814;Envelop;;;;
+224815;Envelop;;;;
+224816;Envelop;;;;
 224842;Envelop;C5;;;Priority
+224843;Envelop;;;;
+225739;Envelop;;;;
+228380;Envelop;;;;
+228381;Envelop;;;;
+228382;Envelop;;;;
+228383;Envelop;;;;
 264104;Envelop;C5;;;Sandd
 ;;;;;
 abc;Bijsluiter;;;;Bijsluiter ABC

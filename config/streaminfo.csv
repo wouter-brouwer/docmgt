@@ -1,30 +1,6 @@
 Code;Description;PageSize;Plex;Color;PaperType;PaperCode;Envelop;Inserting;Insert1;Insert2;Insert3;Insert4;Insert5;Insert6;Mailer;MailClass;SLA
-#;CARDS AFSCHRIFTEN;;;;;;;;;;;;;;;;
-82;CARDS ENKELV. CHARGE;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;Basic;
-83;CARDS MEERV. CHARGE;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;x;
-84;CARDS ENKELV. KREDIET;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;Basic;
-85;CARDS MEERV. KREDIET;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;x;
-86;CARDS BUITENLAND;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;btl;
-#;;;;;;;;;;;;;;;;;
-#;SPAAR AFSCHRIFTEN;;;;;;;;;;;;;;;;
-60;INTERN PDP KLASSIEK SPAREN;A5L;simplex;bw;cf;224825;224813;manual;;;;;;;PostNL;X;
-61;MECH.NORMAAL KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
-62;MECH.PIEK KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
-63;MECH.BIJSL 1 KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
-64;MECH.BIJSL 2 KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
-65;MECH.BIJSL 3 KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
-66;MECH.BUITENLAND KL SPAREN;A5L;simplex;bw;cf;224825;224842;mps;;;;;;;PostNL;X;
-67;SPAREN MECHANISCH SANDD;A5L;simplex;bw;cf;224825;264104;mps;;;;;;;Sandd;;
-68;BRAILLE SPAREN;A5L;simplex;bw;cf;224825;Braille;manual;;;;;;;PostNL;X;
-#;;;;;;;;;;;;;;;;;
-#;;;;;;;;;;;;;;;;;
-#;Voorbeeld waarden;;;;;;;;;;;;;;;;
-#;;A4;simplex;bw;cf;;;mps;;;;;;;PostNL;20;24h
-#;;A4L;dumplex;color;plano;;;mse;;;;;;;Sandd;50;48h
-#;;A5;;;;;;manual;;;;;;;;europe;
-#;;A5L;;;;;;Booklet;;;;;;;;world;
 ;;;;;;;;;;;;;;;;;
-#;AFSCHRIFTEN BETALEN ZAKELIJK;;;;;;;;;;;;;;;;
+#;BETALEN ZAKELIJK;;;;;;;;;;;;;;;;
 1;Afschriften Betalen Zakelijk enkelvoudig;A4;simplex;bw;cf;224829;224815;mse;;;;;;;;Basic;
 2;Afschriften Betalen Zakelijk 24h;A4;simplex;bw;cf;224829;224815;mse;;;;;;;;24h;
 4;Afschriften Betalen Zakelijk licht;A4;simplex;bw;cf;224829;224815;mse;;;;;;;;Basic;
@@ -37,7 +13,7 @@ Code;Description;PageSize;Plex;Color;PaperType;PaperCode;Envelop;Inserting;Inser
 12;Afschriften Betalen Zakelijk Braille;A4;simplex;bw;cf;224829;224816;manual;;;;;;;;X;
 14;Afschriften Betalen Zakelijk Losse Images;A4;simplex;bw;cf;;;manual;;;;;;;;X;
 ;;;;;;;;;;;;;;;;;
-#;AFSCHRIFTEN BETALEN PARTICULIER;;;;;;;;;;;;;;;;
+#;BETALEN PARTICULIER;;;;;;;;;;;;;;;;
 31;Afschriften Betalen Particulier Enkelvoudig;A5;simplex;bw;cf;224825;224813;;;;;;;;PostNL;Basic;
 32;Afschriften Betalen Particulier Meervoudig licht;A5;simplex;bw;cf;224825;224813;;;;;;;;PostNL;Basic;
 33;Afschriften Betalen Particulier Meervoudig zwaar;A5;simplex;bw;cf;224825;225739;;;;;;;;PostNL;Basic;
@@ -58,3 +34,43 @@ Code;Description;PageSize;Plex;Color;PaperType;PaperCode;Envelop;Inserting;Inser
 54;Afschriften Betalen Particulier Bijsluiter 5;A5;simplex;bw;cf;224825;224813;;;;;;;;PostNL;Basic;
 55;Afschriften Betalen Particulier Bijsluiter 6;A5;simplex;bw;cf;224825;224813;;;;;;;;PostNL;Basic;
 56;Afschriften Betalen Particulier Bijsluiter 7;A5;simplex;bw;cf;224825;224813;;;;;;;;PostNL;Basic;
+;;;;;;;;;;;;;;;;;
+#;SPAREN;;;;;;;;;;;;;;;;
+60;INTERN PDP KLASSIEK SPAREN;A5L;simplex;bw;cf;224825;224813;manual;;;;;;;PostNL;X;
+61;MECH.NORMAAL KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
+62;MECH.PIEK KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
+63;MECH.BIJSL 1 KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
+64;MECH.BIJSL 2 KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
+65;MECH.BIJSL 3 KL SPAREN;A5L;simplex;bw;cf;224825;224813;mps;;;;;;;PostNL;Basic;
+66;MECH.BUITENLAND KL SPAREN;A5L;simplex;bw;cf;224825;224842;mps;;;;;;;PostNL;X;
+67;SPAREN MECHANISCH SANDD;A5L;simplex;bw;cf;224825;264104;mps;;;;;;;Sandd;;
+68;BRAILLE SPAREN;A5L;simplex;bw;cf;224825;Braille;manual;;;;;;;PostNL;X;
+;;;;;;;;;;;;;;;;;
+#;JOVZ;;;;;;;;;;;;;;;;
+76;ING Jaaroverzicht Ninnenland;A4;simplex;bw;cf;225866;228383;;;;;;;;PostNL;Basic;
+77;ING Jaaroverzicht Buitenland;A4;simplex;bw;cf;225866;228383;;;;;;;;PostNL;X;
+78;ING Jaaroverzicht SANDD;A4;simplex;bw;cf;225866;;;;;;;;;Sandd;;
+;;;;;;;;;;;;;;;;;
+#;CARDS;;;;;;;;;;;;;;;;
+82;CARDS ENKELV. CHARGE;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;Basic;
+83;CARDS MEERV. CHARGE;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;x;
+84;CARDS ENKELV. KREDIET;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;Basic;
+85;CARDS MEERV. KREDIET;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;x;
+86;CARDS BUITENLAND;A5L;simplex;bw;cf;225761;224813;mps;;;;;;;PostNL;btl;
+;;;;;;;;;;;;;;;;;
+#;BELEGGEN;;;;;;;;;;;;;;;;
+90;Afschriften Beleggen Licht NL;A4;simplex;bw;cf;224829;228380;;;;;;;;PostNL;Basic;
+91;Afschriften Beleggen Licht Buitenland;A4;simplex;bw;cf;228365;228380;;;;;;;;PostNL;X;
+92;Afschriften Beleggen Zwaar;A4;simplex;bw;cf;228365;228381;;;;;;;;PostNL;X;
+93;Beleggen Brieven Licht Binnenland;A4;simplex;bw;cf;228366;228383;;;;;;;;PostNL;24h;
+94;Beleggen Brieven Licht Buitenland;A4;simplex;bw;cf;228366;228383;;;;;;;;PostNL;X;
+95;Beleggen Brieven Zwaar;A4;simplex;bw;cf;228366;228382;;;;;;;;PostNL;X;
+96;Beleggen Overzicht Licht Binnenland;A4;simplex;bw;cf;228366;228383;;;;;;;;PostNL;Basic;
+97;Beleggen Overzicht Licht Buitenland;A4;simplex;bw;cf;228366;228383;;;;;;;;PostNL;X;
+98;Beleggen Overzicht Zwaar;A4;simplex;bw;cf;228366;228382;;;;;;;;PostNL;X;
+;;;;;;;;;;;;;;;;;
+#;Voorbeeld waarden;;;;;;;;;;;;;;;;
+#;;A4;simplex;bw;cf;;;mps;;;;;;;PostNL;20;24h
+#;;A4L;dumplex;color;plano;;;mse;;;;;;;Sandd;50;48h
+#;;A5;;;;;;manual;;;;;;;;europe;
+#;;A5L;;;;;;Booklet;;;;;;;;world;
