@@ -1,5 +1,5 @@
 #Prog = "SplitAFP"
-
+;
 ;{ Documentatie
 
 ; Dit programma splitst AFP bestanden naar losse documenten.

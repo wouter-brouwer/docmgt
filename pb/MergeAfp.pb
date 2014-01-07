@@ -252,6 +252,8 @@ VerwerkJob:
   Dim Stations(6) 
   ResourcesSubDir.s = CheckDirectory(ResourcesDir + Stroom)
   PGDlen = 0
+  Documents = 0
+  TotalPages = 0
   
   ; Zet de filenamen in een list om ze gesorteerd te kunnen verwerken
   GetDirSorted(FileNames(), JobDir + ".todo", "*.afp", #PB_DirectoryEntry_File)
@@ -305,6 +307,7 @@ VerwerkJob:
     p = FindString(InputFile, "_P")
     e = FindString(InputFile, ".")
     Pages = Val(Mid(InputFile, p + 2, e - p))
+    TotalPages + Pages
     
     InserterStations.s = "000000"
     QualityCheck.s = "0"
@@ -357,13 +360,13 @@ VerwerkJob:
           lv.c = PeekC(*AFPRecord + 6 + ln)
           TagValue.s = EbcdicToAscii(PeekS(*AFPRecord + 6 + 4 + ln, lv - 4))
           Select TagName
-            Case "ADF-IP-INSERTERSTATIONS"
+            Case "ADF_IP_INSERTERSTATIONS"
               InserterStations = TagValue
-            Case "ADF-IP-EDGEMARKER"
+            Case "ADF_IP_EDGEMARKER"
               EdgeMarker = TagValue
-            Case "ADF-IP-QUALITYCHECK"
+            Case "ADF_IP_QUALITYCHECK"
               QualityCheck = TagValue
-            Case "ADF-IP-NEXTCHANNEL"
+            Case "ADF_IP_NEXTCHANNEL"
               NextChannel = TagValue
           EndSelect
           
@@ -516,7 +519,7 @@ VerwerkJob:
     MrdfRecord + "2"    
     MrdfRecord + RSet(Str(Documents),6,"0")
     MrdfRecord + RSet(Str(TotalPages),10,"0")
-    MrdfRecord + Space(132)
+    MrdfRecord + Space(112)
     For i = 1 To 6
       If Stations(i) > 0
         MrdfRecord + "2" 
@@ -528,7 +531,7 @@ VerwerkJob:
     MrdfRecord + Space(328)
     MrdfRecord + Zero(16*6)
     MrdfRecord + LSet(OutputFile, 60)
-    MrdfRecord + Space(118)
+    MrdfRecord + Space(138)
     WriteStringN(MrdfFileNr, MrdfRecord)
     ;}
     ForEach MrdfLines()
@@ -541,9 +544,9 @@ VerwerkJob:
   RenameFile(JobDir + ".todo", JobDir + ".busy")
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Linux - x86)
-; CursorPosition = 425
-; FirstLine = 113
-; Folding = Qz9
+; IDE Options = PureBasic 5.11 (Windows - x86)
+; CursorPosition = 312
+; FirstLine = 35
+; Folding = Qz+
 ; EnableXP
 ; Executable = mergeAfp
