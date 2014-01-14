@@ -13,6 +13,7 @@ Procedure.s StreamInfo(StreamCode.s, Keyword.s)
     FileNr = ReadFile(#PB_Any, FileName)
     If FileNr > 0
       Keywords = ""
+      ClearList(Lines())
       While Not Eof(FileNr)
         Line.s = ReadString(FileNr)
         If Left(Line, 1) <> "#"
@@ -54,8 +55,8 @@ Procedure.s StreamInfo(StreamCode.s, Keyword.s)
   ProcedureReturn "Error: Unable to find StreamCode " + StreamCode
 
 EndProcedure
-
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 21
+; IDE Options = PureBasic 5.11 (Linux - x86)
+; CursorPosition = 15
+; FirstLine = 6
 ; Folding = -
 ; EnableXP

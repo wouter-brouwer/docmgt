@@ -80,6 +80,7 @@ Until Quit
 ;{ Afsluiting
 LogMsg(#Prog + " ended")
 DeleteFile(StopFile)
+DeleteFile(BeatFile)
 End
 ;}
 
@@ -123,9 +124,9 @@ VerwerkResult:
   LogMsg("Info: Job " + JobName + " completed with " + Str(OK) + " OK documents and " + Str(NOK) + " not OK documents")
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 71
-; FirstLine = 20
-; Folding = u-
+; IDE Options = PureBasic 5.11 (Linux - x86)
+; CursorPosition = 83
+; FirstLine = 31
+; Folding = e-
 ; EnableXP
-; Executable = \aiw\aiw1\openloop\bin\reconcile
+; Executable = reconcile

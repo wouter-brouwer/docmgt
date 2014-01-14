@@ -248,6 +248,9 @@ Repeat
         If Left(Line,1) = "#" ; Commentaar overslaan
           Continue
         EndIf
+        If Line = " " ; Lege regels
+          Continue
+        EndIf
         Line = ReplaceString(Line, ",", " ")
         Line = ReplaceString(Line, ";", " ")
         Line = ReplaceString(Line, "  ", " ")
@@ -483,20 +486,31 @@ Repeat
         
         ;{ Check of er niet nog nieuwe bestanden zijn
         If NietJonger >= 0
-          Match = 0
-          Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii:%ss", Datum + " " + Tijd) - NietJonger         
+          ;Aantal = 0
+          AantalJonger = 0
+          AantalNietJonger = 0
+          Peil = ParseDate("%dd-%mm-%yyyy %hh:%ii:%ss", Datum + " " + Tijd) - NietJonger
+          ;LogMsg("Peil " + FormatDate("%dd-%mm-%yyyy %hh:%ii:%ss", Peil))
           If ExamineDirectory(0, TodoStroomDir, TodoFileSpec)
             While NextDirectoryEntry(0)
               If DirectoryEntryType(0) = #PB_DirectoryEntry_File
+                ;Aantal + 1
                 If DirectoryEntryDate(0, #PB_Date_Modified) >= Peil
-                  Match + 1
-                  Break 2
+                  AantalJonger + 1
+                  ;Break 2
+                Else
+                  AantalNietJonger + 1
                 EndIf
               EndIf
             Wend
             FinishDirectory(0)
           EndIf
-          If Match
+          
+          ;LogMsg("Aantal: " +Str(Aantal))
+          ;If AantalJonger + AantalNietJonger > 0
+          ;  LogMsg("AantalJonger: " +Str(AantalJonger) + "    AantalNietJonger: " +Str(AantalNietJonger))
+          ;EndIf
+          If AantalJonger > 0
             Continue
           EndIf
         EndIf
@@ -608,6 +622,7 @@ Until Quit
 ;{ Afsluiting
 LogMsg(#Prog + " ended")
 DeleteFile(StopFile)
+DeleteFile(BeatFile)
 
 If TimeFileNr
   CloseFile(TimeFileNr)
@@ -664,9 +679,9 @@ VerwerkFile:
 Return
 ;}
 ; IDE Options = PureBasic 5.11 (Linux - x86)
-; CursorPosition = 644
-; FirstLine = 235
-; Folding = wnF7
+; CursorPosition = 496
+; FirstLine = 277
+; Folding = g42+
 ; EnableUnicode
 ; EnableXP
 ; Executable = makeJobs

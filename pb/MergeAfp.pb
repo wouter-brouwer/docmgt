@@ -199,6 +199,10 @@ HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
 *EAG = AllocateMemory(HexLen(HexString))
 EAGlen = PokeHexString(*EAG, HexString)
 
+*PGD = AllocateMemory(100)
+*PTX = AllocateMemory(1000)
+*BDA = AllocateMemory(100)
+
 NewList FileNames.s()
 NewList JobDirs.s()
 
@@ -226,7 +230,7 @@ Repeat
   
   LogMsg("")
   HeartBeat()
-  Delay(1000)
+  Delay(100)
   
   ; TEST
   ;Quit = 1
@@ -261,7 +265,12 @@ VerwerkJob:
   ClearList(MrdfLines())
   
   ForEach FileNames()
+    
+    HeartBeat()
+    LogMsg("")
+    
     InputFile.s = FileNames()    
+    
     ;{ VerwerkFile    
     If OutputFileNr = 0      
       ;{ OpenOutputFile
@@ -273,9 +282,6 @@ VerwerkJob:
         LogMsg("Critical: Unable to create " + OutputDir + OutputFile)
       EndIf
       Documents = 0
-;       
-;       ; Write Header
-;       WriteData(OutputFileNr, *HeaderBuffer, HeaderLength)
       
        WriteData(OutputFileNr, *BRG, BRGlen)          
        If ExamineDirectory(1, ResourcesSubDir, "*.res")
@@ -288,6 +294,7 @@ VerwerkJob:
              ReadData(0, *ResourceBuffer, ResourceBufferLen)
              CloseFile(0)
              WriteData(OutputFileNr, *ResourceBuffer, ResourceBufferLen)
+             FreeMemory(*ResourceBuffer)
            EndIf
          Wend
          FinishDirectory(1)
@@ -316,14 +323,10 @@ VerwerkJob:
     
     While Not Eof(InputFileNr)
       
-      
       l0.c = ReadCharacter(InputFileNr)
       If l0 <> 90
         LogMsg("Critical: " + JobDir + InputFile + " contains invalid AFP")
       EndIf
-      ;l1.c = ReadCharacter(InputFileNr)
-      ;l2.c = ReadCharacter(InputFileNr)
-      ;RecordLength = l1 * 256 + l2 - 2
       RecordLength.u = ReadUU(InputFileNr) - 2
       
       ReadData(InputFileNr, *AFPRecord, RecordLength)
@@ -349,8 +352,7 @@ VerwerkJob:
           ;CallDebugger
           If PGDlen = 0
             HexString = PeekHexString(*AFPRecord, RecordLength)
-            HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-            *PGD = AllocateMemory(HexLen(HexString))
+            HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString            
             PGDlen = PokeHexString(*PGD, HexString)
           EndIf
           
@@ -373,8 +375,7 @@ VerwerkJob:
         Case BPG
           PageNr + 1
           
-        Case EPG
-          ; <<< TEST
+        Case EPG 
           PageSize.s = UCase(StreamInfo(Stroom, "PageSize"))
           If 1 = 1
             ;{ Plaats 2D Matrix
@@ -401,7 +402,6 @@ VerwerkJob:
               Hexstring.s = BDA_HeaderA5 + HexString(Barcode)
             EndIf              
             HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-            *BDA = AllocateMemory(HexLen(HexString) + 5)
             BDAlen = PokeHexString(*BDA, HexString)
         
             WriteData(OutputFileNr, *BDA, BDAlen)
@@ -435,7 +435,6 @@ VerwerkJob:
             HexString + "00 "
             HexString + "02 F8" ; ???
             HexString = "5A" + Hex2(HexLen(HexString) + 2, 4) + HexString
-            *PTX = AllocateMemory(HexLen(HexString))
             PTXlen = PokeHexString(*PTX, HexString)
             WriteData(OutputFileNr, *PTX, PTXlen)
 
@@ -478,12 +477,12 @@ VerwerkJob:
     MrdfRecord + Space(88)
     MrdfRecord + Zero(4)
     MrdfRecord + Space(122)
-    ;Debug MrdfRecord
     AddElement(MrdfLines())
     MrdfLines() = MrdfRecord
     ;} 
   
     ;}
+    
   Next
   
   If OutputFileNr > 0
@@ -498,7 +497,6 @@ VerwerkJob:
     WriteData(OutputFileNr, *EDT, EDTlen)
     CloseFile(OutputFileNr)
     OutputFileNr = 0
-    ; << TEST
     DeleteFile(OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
     RenameFile(OutputDir + OutputFile.s, OutputDir + ReplaceString(OutputFile, ".tmp", ".afp"))
     
@@ -544,9 +542,9 @@ VerwerkJob:
   RenameFile(JobDir + ".todo", JobDir + ".busy")
 Return
 ;}
-; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 312
-; FirstLine = 35
-; Folding = Qz+
+; IDE Options = PureBasic 5.11 (Linux - x86)
+; CursorPosition = 284
+; FirstLine = 91
+; Folding = 9H9
 ; EnableXP
 ; Executable = mergeAfp

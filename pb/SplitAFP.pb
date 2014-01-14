@@ -86,6 +86,7 @@ Until Quit
 ;{ Afsluiting
 LogMsg(#Prog + " ended")
 DeleteFile(StopFile)
+DeleteFile(BeatFile)
 End
 ;}
 
@@ -171,11 +172,35 @@ VerwerkFile:
    ; If Documents = 10
    ;   End
    ; EndIf
+   HeartBeat()
+   LogMsg("")
     
     ; Structured Field Identifier
     SFID.s = HexString(PeekS(*AFPRecord,3))
     
     Select SFID
+        
+        
+      
+      Case TLE
+        Skip = 1
+        ln.c = PeekC(*AFPRecord + 6)
+        TagName.s = EbcdicToAscii(PeekS(*AFPRecord + 6 + 4, ln - 4))
+        lv.c = PeekC(*AFPRecord + 6 + ln)
+        TagValue.s = EbcdicToAscii(PeekS(*AFPRecord + 6 + 4 + ln, lv - 4))
+        Select TagName
+          Case "ADF_IP_PIECEID"
+            Skip = 0
+          Case "ADF_IP_INSERTERSTATIONS"
+            Skip = 0
+          Case "ADF_IP_EDGEMARKER"
+            Skip = 0
+          Case "ADF_IP_QUALITYCHECK"
+            Skip = 0
+          Case "ADF_IP_NEXTCHANNEL"
+            Skip = 0
+        EndSelect
+        
        
       Case BR
         ResName.s = EbcdicToAscii(PeekS(*AFPRecord + 6, 8)) + ".res"
@@ -191,6 +216,17 @@ VerwerkFile:
             SFID = ENG
             LogMsg("ENG repaired for document " + Str(Documents) + " record " + Str(RecordNr))
           EndIf
+          
+        Else
+          Skip = 1
+       
+          s.s = EbcdicToAscii(PeekS(*AFPRecord + 6, RecordLength - 6))
+    
+          ; NOP content moet "Job.<property name>=<property value>" zijn
+          If Left(s, 4) = "Job." And FindString(s, "=")
+            Skip = 0
+          EndIf  
+  
         EndIf
         ;
         
@@ -393,8 +429,8 @@ VerwerkFileError:
 Return
 ;}
 ; IDE Options = PureBasic 5.11 (Windows - x86)
-; CursorPosition = 182
-; FirstLine = 57
+; CursorPosition = 175
+; FirstLine = 42
 ; Folding = cJ+
 ; EnableXP
-; Executable = SplitAFP
+; Executable = splitAFP
